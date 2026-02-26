@@ -2,13 +2,30 @@ services:
   api:
     build: .
     ports:
-      - '127.0.0.1:55556:55556'
+      - "127.0.0.1:55556:55556"
     environment:
-      PORT: '55555'
-      DB_HOST: '${DB_HOST}'
-      DB_PORT: '3310'
-      DB_USER: '${DB_USER}'
-      DB_PASSWORD: '${DB_PASSWORD}'
-      DB_NAME: '${DB_NAME}'
-      DB_LOGGING: '${DB_LOGGING:-false}'
-      DB_SYNCHRONIZE: '${DB_SYNCHRONIZE:-false}'
+      PORT: "55556"
+      DB_HOST: "yesang-db"
+      DB_PORT: "3306"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_NAME: "${DB_NAME}"
+      DB_LOGGING: "${DB_LOGGING:-false}"
+      DB_SYNCHRONIZE: "${DB_SYNCHRONIZE:-false}"
+    depends_on:
+      - yesang-db
+    restart: unless-stopped
+
+  yesang-db:
+    image: mysql:8.4.0
+    environment:
+      MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD}"
+      MYSQL_DATABASE: "${DB_NAME}"
+      MYSQL_USER: "${DB_USER}"        # yesang
+      MYSQL_PASSWORD: "${DB_PASSWORD}"
+    volumes:
+      - yesang_db_data:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  yesang_db_data:
