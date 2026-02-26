@@ -23,8 +23,8 @@ export class AuthController {
   @ApiOperation({ summary: '구글 로그인 콜백' })
   async googleLoginCallback(@Req() req: any, @Res() res: any) {
     const { accessToken } = await this.authService.oauthLogin(req.user);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    return res.redirect(`${frontendUrl}/oauth/callback?token=${accessToken}`);
+    const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth-callback';
+    return res.redirect(`${redirectUrl}?token=${accessToken}`);
   }
 
   @Get('kakao')
@@ -39,8 +39,8 @@ export class AuthController {
   @ApiOperation({ summary: '카카오 로그인 콜백' })
   async kakaoLoginCallback(@Req() req: any, @Res() res: any) {
     const { accessToken } = await this.authService.oauthLogin(req.user);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    return res.redirect(`${frontendUrl}/oauth/callback?token=${accessToken}`);
+    const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth-callback';
+    return res.redirect(`${redirectUrl}?token=${accessToken}`);
   }
 
   @Get('apple')
@@ -55,7 +55,7 @@ export class AuthController {
   @ApiOperation({ summary: '애플 로그인 콜백' })
   async appleLoginCallback(@Req() req: any, @Res() res: any) {
     const { accessToken } = await this.authService.oauthLogin(req.user);
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-    return res.redirect(`${frontendUrl}/oauth/callback?token=${accessToken}`);
+    const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth-callback';
+    return res.redirect(`${redirectUrl}?token=${accessToken}`);
   }
 }
