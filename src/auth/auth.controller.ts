@@ -21,7 +21,7 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: '구글 로그인 콜백' })
-  async googleLoginCallback(@Req() req: any, @Res() res: Response) {
+  async googleLoginCallback(@Req() req: any, @Res() res: any) {
     const { accessToken } = await this.authService.oauthLogin(req.user);
     const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth/callback';
     return this.sendAppRedirect(res, redirectUrl, accessToken);
@@ -37,7 +37,7 @@ export class AuthController {
   @Get('kakao/callback')
   @UseGuards(KakaoAuthGuard)
   @ApiOperation({ summary: '카카오 로그인 콜백' })
-  async kakaoLoginCallback(@Req() req: any, @Res() res: Response) {
+  async kakaoLoginCallback(@Req() req: any, @Res() res: any) {
     const { accessToken } = await this.authService.oauthLogin(req.user);
     const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth/callback';
     return this.sendAppRedirect(res, redirectUrl, accessToken);
@@ -53,7 +53,7 @@ export class AuthController {
   @Get('apple/callback')
   @UseGuards(AppleAuthGuard)
   @ApiOperation({ summary: '애플 로그인 콜백' })
-  async appleLoginCallback(@Req() req: any, @Res() res: Response) {
+  async appleLoginCallback(@Req() req: any, @Res() res: any) {
     const { accessToken } = await this.authService.oauthLogin(req.user);
     const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth/callback';
     return this.sendAppRedirect(res, redirectUrl, accessToken);
