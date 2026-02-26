@@ -1,0 +1,14 @@
+services:
+  api:
+    build: .
+    ports:
+      - "55555:55555"
+    environment:
+      PORT: "55555"
+      DB_HOST: "${DB_HOST}"
+      DB_PORT: "3310"
+      DB_USER: "${DB_USER}"
+      DB_PASSWORD: "${DB_PASSWORD}"
+      DB_NAME: "${DB_NAME}"
+      DB_LOGGING: "${DB_LOGGING:-false}"
+      DB_SYNCHRONIZE: "${DB_SYNCHRONIZE:-false}"

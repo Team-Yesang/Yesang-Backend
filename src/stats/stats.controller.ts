@@ -1,0 +1,19 @@
+import { Controller, Get, Query, UseGuards } from '@nestjs/common';
+import { CurrentUser } from '../common/decorators/current-user.decorator';
+import { AuthGuard } from '../common/guards/auth.guard';
+import type { RequestUser } from '../common/interfaces/request-with-user';
+import { StatsService } from './stats.service';
+
+@Controller('stats')
+@UseGuards(AuthGuard)
+export class StatsController {
+  constructor(private readonly statsService: StatsService) {}
+
+  @Get('summary')
+  async getSummary(@CurrentUser() user: RequestUser, @Query('year') year?: string) {
+    const parsed = year ? Number(year) : undefined;
+    const parsedYear =
+      parsed && !Number.isNaN(parsed) ? parsed : new Date().getFullYear();
+    return this.statsService.getYearSummary(user.id, parsedYear);
+  }
+}
