@@ -20,22 +20,22 @@ export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
   @Get('me')
-  @ApiOperation({ summary: 'Get my profile' })
-  @ApiOkResponse({ description: 'My profile' })
+  @ApiOperation({ summary: '내 프로필 조회' })
+  @ApiOkResponse({ description: '내 프로필' })
   async getMe(@CurrentUser() user: RequestUser) {
     return this.usersService.getById(user.id);
   }
 
   @Patch('me')
-  @ApiOperation({ summary: 'Update my profile' })
+  @ApiOperation({ summary: '내 프로필 수정' })
   @ApiBody({ type: UpdateUserDto })
-  @ApiOkResponse({ description: 'Updated profile' })
+  @ApiOkResponse({ description: '수정된 프로필' })
   async updateMe(@CurrentUser() user: RequestUser, @Body() body: UpdateUserDto) {
     return this.usersService.update(user.id, body);
   }
 
   @Delete('me')
-  @ApiOperation({ summary: 'Delete my account' })
+  @ApiOperation({ summary: '내 계정 삭제' })
   @ApiOkResponse({ schema: { example: { deleted: true } } })
   async removeMe(@CurrentUser() user: RequestUser) {
     await this.usersService.remove(user.id);

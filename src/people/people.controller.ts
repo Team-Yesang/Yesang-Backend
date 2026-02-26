@@ -34,16 +34,16 @@ export class PeopleController {
   constructor(private readonly peopleService: PeopleService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List people' })
-  @ApiOkResponse({ description: 'List people' })
+  @ApiOperation({ summary: '인물 목록 조회' })
+  @ApiOkResponse({ description: '인물 목록' })
   async list(@CurrentUser() user: RequestUser) {
     return this.peopleService.list(user.id);
   }
 
   @Get('recent')
-  @ApiOperation({ summary: 'List recent people' })
+  @ApiOperation({ summary: '최근 인물 목록 조회' })
   @ApiQuery({ name: 'limit', required: false, example: 5 })
-  @ApiOkResponse({ description: 'List recent people' })
+  @ApiOkResponse({ description: '최근 인물 목록' })
   async listRecent(@CurrentUser() user: RequestUser, @Query('limit') limit?: string) {
     const parsedLimit = limit ? Number(limit) : undefined;
     const safeLimit = parsedLimit && !Number.isNaN(parsedLimit) ? parsedLimit : undefined;
@@ -51,26 +51,26 @@ export class PeopleController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get person by id' })
+  @ApiOperation({ summary: '인물 단건 조회' })
   @ApiParam({ name: 'id', format: 'uuid' })
-  @ApiOkResponse({ description: 'Person detail' })
+  @ApiOkResponse({ description: '인물 상세' })
   async getById(@CurrentUser() user: RequestUser, @Param('id') id: string) {
     return this.peopleService.getById(user.id, id);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create person' })
+  @ApiOperation({ summary: '인물 생성' })
   @ApiBody({ type: CreatePersonDto })
-  @ApiCreatedResponse({ description: 'Person created' })
+  @ApiCreatedResponse({ description: '인물 생성 완료' })
   async create(@CurrentUser() user: RequestUser, @Body() body: CreatePersonDto) {
     return this.peopleService.create(user.id, body);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update person' })
+  @ApiOperation({ summary: '인물 수정' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiBody({ type: UpdatePersonDto })
-  @ApiOkResponse({ description: 'Person updated' })
+  @ApiOkResponse({ description: '인물 수정 완료' })
   async update(
     @CurrentUser() user: RequestUser,
     @Param('id') id: string,
@@ -80,7 +80,7 @@ export class PeopleController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete person' })
+  @ApiOperation({ summary: '인물 삭제' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ schema: { example: { deleted: true } } })
   async remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {

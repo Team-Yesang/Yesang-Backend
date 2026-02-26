@@ -34,9 +34,9 @@ export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List transactions' })
+  @ApiOperation({ summary: '거래 내역 목록 조회' })
   @ApiQuery({ name: 'personId', required: false, format: 'uuid' })
-  @ApiOkResponse({ description: 'List transactions' })
+  @ApiOkResponse({ description: '거래 내역 목록' })
   async list(
     @CurrentUser() user: RequestUser,
     @Query('personId') personId?: string,
@@ -45,18 +45,18 @@ export class TransactionsController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create transaction' })
+  @ApiOperation({ summary: '거래 내역 생성' })
   @ApiBody({ type: CreateTransactionDto })
-  @ApiCreatedResponse({ description: 'Transaction created' })
+  @ApiCreatedResponse({ description: '거래 내역 생성 완료' })
   async create(@CurrentUser() user: RequestUser, @Body() body: CreateTransactionDto) {
     return this.transactionsService.create(user.id, body);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update transaction' })
+  @ApiOperation({ summary: '거래 내역 수정' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiBody({ type: UpdateTransactionDto })
-  @ApiOkResponse({ description: 'Transaction updated' })
+  @ApiOkResponse({ description: '거래 내역 수정 완료' })
   async update(
     @CurrentUser() user: RequestUser,
     @Param('id') id: string,
@@ -66,7 +66,7 @@ export class TransactionsController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete transaction' })
+  @ApiOperation({ summary: '거래 내역 삭제' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ schema: { example: { deleted: true } } })
   async remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {

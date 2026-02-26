@@ -6,8 +6,8 @@ import { AppModule } from './app.module';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const config = new DocumentBuilder()
-    .setTitle('Yesang API')
-    .setDescription('Yesang backend API')
+    .setTitle('예상 API')
+    .setDescription('예상 백엔드 API 문서')
     .setVersion('1.0.0')
     .addBearerAuth()
     .build();

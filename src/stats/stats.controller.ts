@@ -19,9 +19,9 @@ export class StatsController {
   constructor(private readonly statsService: StatsService) {}
 
   @Get('summary')
-  @ApiOperation({ summary: 'Get yearly summary' })
+  @ApiOperation({ summary: '연간 요약 조회' })
   @ApiQuery({ name: 'year', required: false, example: 2026 })
-  @ApiOkResponse({ description: 'Yearly summary' })
+  @ApiOkResponse({ description: '연간 요약' })
   async getSummary(@CurrentUser() user: RequestUser, @Query('year') year?: string) {
     const parsed = year ? Number(year) : undefined;
     const parsedYear =

@@ -34,10 +34,10 @@ export class EventsController {
   constructor(private readonly eventsService: EventsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List events by month' })
+  @ApiOperation({ summary: '월별 이벤트 목록 조회' })
   @ApiQuery({ name: 'year', required: false, example: 2026 })
   @ApiQuery({ name: 'month', required: false, example: 2 })
-  @ApiOkResponse({ description: 'List events' })
+  @ApiOkResponse({ description: '이벤트 목록' })
   async listByMonth(
     @CurrentUser() user: RequestUser,
     @Query('year') year?: string,
@@ -51,26 +51,26 @@ export class EventsController {
   }
 
   @Get(':id')
-  @ApiOperation({ summary: 'Get event by id' })
+  @ApiOperation({ summary: '이벤트 단건 조회' })
   @ApiParam({ name: 'id', format: 'uuid' })
-  @ApiOkResponse({ description: 'Event detail' })
+  @ApiOkResponse({ description: '이벤트 상세' })
   async getById(@CurrentUser() user: RequestUser, @Param('id') id: string) {
     return this.eventsService.getById(user.id, id);
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create event' })
+  @ApiOperation({ summary: '이벤트 생성' })
   @ApiBody({ type: CreateEventDto })
-  @ApiCreatedResponse({ description: 'Event created' })
+  @ApiCreatedResponse({ description: '이벤트 생성 완료' })
   async create(@CurrentUser() user: RequestUser, @Body() body: CreateEventDto) {
     return this.eventsService.create(user.id, body);
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update event' })
+  @ApiOperation({ summary: '이벤트 수정' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiBody({ type: UpdateEventDto })
-  @ApiOkResponse({ description: 'Event updated' })
+  @ApiOkResponse({ description: '이벤트 수정 완료' })
   async update(
     @CurrentUser() user: RequestUser,
     @Param('id') id: string,
@@ -80,7 +80,7 @@ export class EventsController {
   }
 
   @Delete(':id')
-  @ApiOperation({ summary: 'Delete event' })
+  @ApiOperation({ summary: '이벤트 삭제' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiOkResponse({ schema: { example: { deleted: true } } })
   async remove(@CurrentUser() user: RequestUser, @Param('id') id: string) {

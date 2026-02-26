@@ -9,7 +9,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login/:provider')
-  @ApiOperation({ summary: 'Social login' })
+  @ApiOperation({ summary: '소셜 로그인' })
   @ApiParam({
     name: 'provider',
     required: true,
