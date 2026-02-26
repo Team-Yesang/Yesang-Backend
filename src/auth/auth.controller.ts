@@ -1,32 +1,54 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
-import { ApiBody, ApiOkResponse, ApiOperation, ApiParam, ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Req, UseGuards } from '@nestjs/common';
+import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
-import { LoginRequestDto, LoginResponseDto } from './dto/login.dto';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
+import { KakaoAuthGuard } from './guards/kakao-auth.guard';
+import { AppleAuthGuard } from './guards/apple-auth.guard';
 
 @Controller('auth')
 @ApiTags('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post('login/:provider')
-  @ApiOperation({ summary: '소셜 로그인' })
-  @ApiParam({
-    name: 'provider',
-    required: true,
-    example: 'google',
-    description: 'google | kakao | apple',
-  })
-  @ApiBody({ type: LoginRequestDto })
-  @ApiOkResponse({ type: LoginResponseDto })
-  async login(
-    @Param('provider') provider: string,
-    @Body() body: LoginRequestDto,
-  ): Promise<LoginResponseDto> {
-    const user = await this.authService.login(provider, body);
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({ summary: '구글 로그인 시작' })
+  async googleLogin() {
+    // GoogleAuthGuard가 리다이렉트를 처리합니다.
+  }
 
-    return {
-      accessToken: `dev-token-${user.id}`,
-      user,
-    };
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({ summary: '구글 로그인 콜백' })
+  async googleLoginCallback(@Req() req: any) {
+    return this.authService.oauthLogin(req.user);
+  }
+
+  @Get('kakao')
+  @UseGuards(KakaoAuthGuard)
+  @ApiOperation({ summary: '카카오 로그인 시작' })
+  async kakaoLogin() {
+    // KakaoAuthGuard가 리다이렉트를 처리합니다.
+  }
+
+  @Get('kakao/callback')
+  @UseGuards(KakaoAuthGuard)
+  @ApiOperation({ summary: '카카오 로그인 콜백' })
+  async kakaoLoginCallback(@Req() req: any) {
+    return this.authService.oauthLogin(req.user);
+  }
+
+  @Get('apple')
+  @UseGuards(AppleAuthGuard)
+  @ApiOperation({ summary: '애플 로그인 시작' })
+  async appleLogin() {
+    // AppleAuthGuard가 리다이렉트를 처리합니다.
+  }
+
+  @Get('apple/callback')
+  @UseGuards(AppleAuthGuard)
+  @ApiOperation({ summary: '애플 로그인 콜백' })
+  async appleLoginCallback(@Req() req: any) {
+    return this.authService.oauthLogin(req.user);
   }
 }
