@@ -13,11 +13,18 @@ export class KakaoStrategy extends PassportStrategy(Strategy, 'kakao') {
   }
 
   async validate(accessToken: string, refreshToken: string, profile: any, done: any): Promise<any> {
-    const { kakao_account } = profile._json;
+    const { _json } = profile;
+    const kakao_account = _json?.kakao_account;
+    
+    // 이메일이 없을 경우 카카오 고유 ID를 이용해 임시 이메일 생성
+    const email = kakao_account?.email || `${profile.id}@kakao.com`;
+    const name = kakao_account?.profile?.nickname || profile.displayName || 'Kakao User';
+    const profileImage = kakao_account?.profile?.profile_image_url || null;
+
     const user = {
-      email: kakao_account.email,
-      name: kakao_account.profile.nickname,
-      profileImage: kakao_account.profile.profile_image_url,
+      email,
+      name,
+      profileImage,
       provider: AuthProvider.KAKAO,
     };
     done(null, user);
