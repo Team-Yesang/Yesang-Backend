@@ -21,10 +21,10 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: '구글 로그인 콜백' })
-  async googleLoginCallback(@Req() req: any, @Res() res: any) {
+  async googleLoginCallback(@Req() req: any, @Res() res: Response) {
     const { accessToken } = await this.authService.oauthLogin(req.user);
-    const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth-callback';
-    return res.redirect(`${redirectUrl}?token=${accessToken}`);
+    const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth/callback';
+    return this.sendAppRedirect(res, redirectUrl, accessToken);
   }
 
   @Get('kakao')
@@ -37,10 +37,10 @@ export class AuthController {
   @Get('kakao/callback')
   @UseGuards(KakaoAuthGuard)
   @ApiOperation({ summary: '카카오 로그인 콜백' })
-  async kakaoLoginCallback(@Req() req: any, @Res() res: any) {
+  async kakaoLoginCallback(@Req() req: any, @Res() res: Response) {
     const { accessToken } = await this.authService.oauthLogin(req.user);
-    const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth-callback';
-    return res.redirect(`${redirectUrl}?token=${accessToken}`);
+    const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth/callback';
+    return this.sendAppRedirect(res, redirectUrl, accessToken);
   }
 
   @Get('apple')
@@ -53,9 +53,32 @@ export class AuthController {
   @Get('apple/callback')
   @UseGuards(AppleAuthGuard)
   @ApiOperation({ summary: '애플 로그인 콜백' })
-  async appleLoginCallback(@Req() req: any, @Res() res: any) {
+  async appleLoginCallback(@Req() req: any, @Res() res: Response) {
     const { accessToken } = await this.authService.oauthLogin(req.user);
-    const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth-callback';
-    return res.redirect(`${redirectUrl}?token=${accessToken}`);
+    const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth/callback';
+    return this.sendAppRedirect(res, redirectUrl, accessToken);
+  }
+
+  /**
+   * 앱으로 딥링크 리다이렉트를 수행하는 HTML 응답을 보냅니다.
+   */
+  private sendAppRedirect(res: Response, url: string, token: string) {
+    const finalUrl = `${url}?token=${token}`;
+    
+    // 모바일 브라우저 호환성을 위해 JS 리다이렉트 사용
+    res.setHeader('Content-Type', 'text/html');
+    return res.send(`
+      <html>
+        <body>
+          <script>
+            window.location.href = "${finalUrl}";
+            // 약간의 지연 후 창 닫기 (일부 환경용)
+            setTimeout(function() {
+              window.close();
+            }, 500);
+          </script>
+        </body>
+      </html>
+    `);
   }
 }
