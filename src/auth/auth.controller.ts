@@ -1,10 +1,11 @@
-import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { KakaoAuthGuard } from './guards/kakao-auth.guard';
 import { AppleAuthGuard } from './guards/apple-auth.guard';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @Controller('auth')
 @ApiTags('auth')
@@ -51,6 +52,20 @@ export class AuthController {
     const { accessToken, refreshToken } = await this.authService.oauthLogin(req.user);
     const redirectUrl = this.getRedirectUrl(req);
     return this.sendAppRedirect(res, redirectUrl, accessToken, refreshToken);
+  }
+
+  @Post('refresh')
+  @ApiOperation({ summary: '토큰 갱신' })
+  async refresh(@Body('refreshToken') refreshToken: string) {
+    return this.authService.refresh(refreshToken);
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: '로그아웃' })
+  async logout(@Req() req: any) {
+    return this.authService.logout(req.user.id);
   }
 
   private getRedirectUrl(req: any): string {

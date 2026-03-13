@@ -35,6 +35,9 @@ export class UserEntity {
   @Column({ type: 'enum', enum: AuthProvider })
   provider: AuthProvider;
 
+  @Column({ name: 'refresh_token', type: 'varchar', length: 500, nullable: true })
+  refreshToken?: string | null;
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
