@@ -20,9 +20,9 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
   async googleLoginCallback(@Req() req: any, @Res() res: any) {
-    const { accessToken } = await this.authService.oauthLogin(req.user);
-    const redirectUrl = process.env.FRONTEND_URL || 'yesang://login';
-    return this.sendAppRedirect(res, redirectUrl, accessToken);
+    const { accessToken, refreshToken } = await this.authService.oauthLogin(req.user);
+    const redirectUrl = this.getRedirectUrl(req);
+    return this.sendAppRedirect(res, redirectUrl, accessToken, refreshToken);
   }
 
   @Get('kakao')
@@ -34,9 +34,9 @@ export class AuthController {
   @Get('kakao/callback')
   @UseGuards(KakaoAuthGuard)
   async kakaoLoginCallback(@Req() req: any, @Res() res: any) {
-    const { accessToken } = await this.authService.oauthLogin(req.user);
-    const redirectUrl = process.env.FRONTEND_URL || 'yesang://login';
-    return this.sendAppRedirect(res, redirectUrl, accessToken);
+    const { accessToken, refreshToken } = await this.authService.oauthLogin(req.user);
+    const redirectUrl = this.getRedirectUrl(req);
+    return this.sendAppRedirect(res, redirectUrl, accessToken, refreshToken);
   }
 
   @Get('apple')
@@ -48,13 +48,27 @@ export class AuthController {
   @Get('apple/callback')
   @UseGuards(AppleAuthGuard)
   async appleLoginCallback(@Req() req: any, @Res() res: any) {
-    const { accessToken } = await this.authService.oauthLogin(req.user);
-    const redirectUrl = process.env.FRONTEND_URL || 'yesang://login';
-    return this.sendAppRedirect(res, redirectUrl, accessToken);
+    const { accessToken, refreshToken } = await this.authService.oauthLogin(req.user);
+    const redirectUrl = this.getRedirectUrl(req);
+    return this.sendAppRedirect(res, redirectUrl, accessToken, refreshToken);
   }
 
-  private sendAppRedirect(res: Response, url: string, token: string) {
-    const finalUrl = `${url}?accessToken=${token}`;
+  private getRedirectUrl(req: any): string {
+    const state = req.query.state;
+    if (state) {
+      try {
+        const parsedState = JSON.parse(state);
+        if (parsedState.redirectUri) {
+          return parsedState.redirectUri;
+        }
+      } catch (e) {}
+    }
+    return process.env.FRONTEND_URL || 'yesang://login';
+  }
+
+  private sendAppRedirect(res: Response, url: string, accessToken: string, refreshToken: string) {
+    const separator = url.includes('?') ? '&' : '?';
+    const finalUrl = `${url}${separator}accessToken=${accessToken}&refreshToken=${refreshToken}`;
     
     res.setHeader('Content-Type', 'text/html');
     return res.send(`
