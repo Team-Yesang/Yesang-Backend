@@ -18,7 +18,7 @@ export class AuthService {
     name: string;
     profileImage?: string;
     provider: AuthProvider;
-  }): Promise<{ accessToken: string; user: UserEntity }> {
+  }): Promise<{ accessToken: string; refreshToken: string; user: UserEntity }> {
     const { email, name, profileImage, provider } = payload;
 
     if (!email) {
@@ -45,10 +45,12 @@ export class AuthService {
     }
 
     const jwtPayload = { sub: user.id, email: user.email };
-    const accessToken = this.jwtService.sign(jwtPayload);
+    const accessToken = this.jwtService.sign(jwtPayload, { expiresIn: '1d' });
+    const refreshToken = this.jwtService.sign(jwtPayload, { expiresIn: '30d' });
 
     return {
       accessToken,
+      refreshToken,
       user,
     };
   }
