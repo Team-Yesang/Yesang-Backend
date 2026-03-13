@@ -1,0 +1,12 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: "ko-KR"
+early_access: false
+
+reviews:
+  profile: "chill"
+  high_level_summary: true
+  poem: false
+  tone_instructions: "모든 리뷰와 응답은 친절한 한국어 '~해요' 체로 작성해 주세요."
+
+chat:
+  auto_reply: true
