@@ -1,5 +1,5 @@
 import { Controller, Get, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
@@ -14,65 +14,54 @@ export class AuthController {
   @Get('google')
   @UseGuards(GoogleAuthGuard)
   @ApiOperation({ summary: '구글 로그인 시작' })
-  async googleLogin() {
-    // GoogleAuthGuard가 리다이렉트를 처리합니다.
-  }
+  async googleLogin() {}
 
+  @ApiExcludeEndpoint()
   @Get('google/callback')
   @UseGuards(GoogleAuthGuard)
-  @ApiOperation({ summary: '구글 로그인 콜백' })
   async googleLoginCallback(@Req() req: any, @Res() res: any) {
     const { accessToken } = await this.authService.oauthLogin(req.user);
-    const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth/callback';
+    const redirectUrl = process.env.FRONTEND_URL || 'yesang://login';
     return this.sendAppRedirect(res, redirectUrl, accessToken);
   }
 
   @Get('kakao')
   @UseGuards(KakaoAuthGuard)
   @ApiOperation({ summary: '카카오 로그인 시작' })
-  async kakaoLogin() {
-    // KakaoAuthGuard가 리다이렉트를 처리합니다.
-  }
+  async kakaoLogin() {}
 
+  @ApiExcludeEndpoint()
   @Get('kakao/callback')
   @UseGuards(KakaoAuthGuard)
-  @ApiOperation({ summary: '카카오 로그인 콜백' })
   async kakaoLoginCallback(@Req() req: any, @Res() res: any) {
     const { accessToken } = await this.authService.oauthLogin(req.user);
-    const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth/callback';
+    const redirectUrl = process.env.FRONTEND_URL || 'yesang://login';
     return this.sendAppRedirect(res, redirectUrl, accessToken);
   }
 
   @Get('apple')
   @UseGuards(AppleAuthGuard)
   @ApiOperation({ summary: '애플 로그인 시작' })
-  async appleLogin() {
-    // AppleAuthGuard가 리다이렉트를 처리합니다.
-  }
+  async appleLogin() {}
 
+  @ApiExcludeEndpoint()
   @Get('apple/callback')
   @UseGuards(AppleAuthGuard)
-  @ApiOperation({ summary: '애플 로그인 콜백' })
   async appleLoginCallback(@Req() req: any, @Res() res: any) {
     const { accessToken } = await this.authService.oauthLogin(req.user);
-    const redirectUrl = process.env.FRONTEND_URL || 'yesang://oauth/callback';
+    const redirectUrl = process.env.FRONTEND_URL || 'yesang://login';
     return this.sendAppRedirect(res, redirectUrl, accessToken);
   }
 
-  /**
-   * 앱으로 딥링크 리다이렉트를 수행하는 HTML 응답을 보냅니다.
-   */
   private sendAppRedirect(res: Response, url: string, token: string) {
-    const finalUrl = `${url}?token=${token}`;
+    const finalUrl = `${url}?accessToken=${token}`;
     
-    // 모바일 브라우저 호환성을 위해 JS 리다이렉트 사용
     res.setHeader('Content-Type', 'text/html');
     return res.send(`
       <html>
         <body>
           <script>
             window.location.href = "${finalUrl}";
-            // 약간의 지연 후 창 닫기 (일부 환경용)
             setTimeout(function() {
               window.close();
             }, 500);
