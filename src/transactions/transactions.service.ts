@@ -75,25 +75,34 @@ export class TransactionsService {
       throw new BadRequestException('Invalid personId');
     }
 
-    if (payload.eventId) {
-      const event = await this.eventsRepository.findOne({
-        where: { id: payload.eventId, userId },
-      });
-      if (!event) {
-        throw new BadRequestException('Invalid eventId');
-      }
-    }
-
     const txDate = new Date(payload.date);
     if (Number.isNaN(txDate.getTime())) {
       throw new BadRequestException('Invalid date');
+    }
+
+    let eventId: string | null = null;
+    if (payload.title) {
+      let event = await this.eventsRepository.findOne({
+        where: { userId, eventName: payload.title, date: payload.date },
+      });
+
+      if (!event) {
+        event = this.eventsRepository.create({
+          id: randomUUID(),
+          userId,
+          eventName: payload.title,
+          date: payload.date,
+        });
+        event = await this.eventsRepository.save(event);
+      }
+      eventId = event.id;
     }
 
     const transaction = this.transactionsRepository.create({
       id: randomUUID(),
       userId,
       personId: payload.personId,
-      eventId: payload.eventId ?? null,
+      eventId,
       amount: payload.amount,
       date: txDate,
       memo: payload.memo ?? null,

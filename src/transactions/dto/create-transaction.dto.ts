@@ -4,8 +4,8 @@ export class CreateTransactionDto {
   @ApiProperty({ format: 'uuid' })
   personId: string;
 
-  @ApiPropertyOptional({ format: 'uuid', nullable: true })
-  eventId?: string | null;
+  @ApiPropertyOptional({ example: '결혼식' })
+  title?: string;
 
   @ApiProperty({ example: 50000 })
   amount: number;
