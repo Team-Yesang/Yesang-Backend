@@ -19,9 +19,45 @@ export class TransactionsService {
 
   async list(userId: string, personId?: string) {
     if (personId) {
-      return this.transactionsRepository.find({ where: { userId, personId } });
+      return this.transactionsRepository.find({
+        where: { userId, personId },
+        order: { date: 'DESC' },
+      });
     }
-    return this.transactionsRepository.find({ where: { userId } });
+    return this.transactionsRepository.find({
+      where: { userId },
+      order: { date: 'DESC' },
+    });
+  }
+
+  async listByPerson(userId: string, personId: string) {
+    const person = await this.peopleRepository.findOne({
+      where: { id: personId, userId },
+    });
+    if (!person) {
+      throw new NotFoundException('Person not found');
+    }
+
+    const transactions = await this.transactionsRepository.find({
+      where: { userId, personId },
+      order: { date: 'DESC' },
+    });
+
+    const balance = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+    const latestAmount = transactions.length > 0 ? transactions[0].amount : null;
+
+    return {
+      balance,
+      latestAmount,
+      transactions: transactions.map((tx) => ({
+        id: tx.id,
+        personId: tx.personId,
+        eventId: tx.eventId,
+        amount: tx.amount,
+        date: tx.date.toISOString().split('T')[0],
+        memo: tx.memo,
+      })),
+    };
   }
 
   async create(

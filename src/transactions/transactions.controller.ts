@@ -24,6 +24,7 @@ import { AuthGuard } from '../common/guards/auth.guard';
 import type { RequestUser } from '../common/interfaces/request-with-user';
 import { CreateTransactionDto, TransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
+import { PersonTransactionResponseDto } from './dto/person-transaction-response.dto';
 import { TransactionsService } from './transactions.service';
 
 @Controller('transactions')
@@ -42,6 +43,17 @@ export class TransactionsController {
     @Query('personId') personId?: string,
   ) {
     return this.transactionsService.list(user.id, personId);
+  }
+
+  @Get('person/:personId')
+  @ApiOperation({ summary: '인물별 거래 내역 조회' })
+  @ApiParam({ name: 'personId', format: 'uuid' })
+  @ApiOkResponse({ type: PersonTransactionResponseDto })
+  async listByPerson(
+    @CurrentUser() user: RequestUser,
+    @Param('personId') personId: string,
+  ) {
+    return this.transactionsService.listByPerson(user.id, personId);
   }
 
   @Post()
