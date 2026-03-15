@@ -1,11 +1,12 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExcludeEndpoint, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { KakaoAuthGuard } from './guards/kakao-auth.guard';
 import { AppleAuthGuard } from './guards/apple-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { AuthResponseDto, LogoutResponseDto } from './dto/auth-response.dto';
 
 @Controller('auth')
 @ApiTags('auth')
@@ -56,6 +57,7 @@ export class AuthController {
 
   @Post('refresh')
   @ApiOperation({ summary: '토큰 갱신' })
+  @ApiResponse({ status: 201, type: AuthResponseDto })
   async refresh(@Body('refreshToken') refreshToken: string) {
     return this.authService.refresh(refreshToken);
   }
@@ -64,6 +66,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()
   @ApiOperation({ summary: '로그아웃' })
+  @ApiResponse({ status: 201, type: LogoutResponseDto })
   async logout(@Req() req: any) {
     return this.authService.logout(req.user.id);
   }
