@@ -39,53 +39,18 @@ export class PeopleService {
     });
   }
 
-  async listRecent(userId: string, limit = 5) {
-    const people = await this.peopleRepository.find({ where: { userId } });
-    if (people.length === 0) return [];
-
-    const transactions = await this.transactionsRepository.find({
-      where: { userId },
-      order: { date: 'DESC' },
-    });
-
-    const lastTransactionByPerson = new Map<string, Date>();
-    for (const tx of transactions) {
-      const existing = lastTransactionByPerson.get(tx.personId);
-      if (!existing || tx.date > existing) {
-        lastTransactionByPerson.set(tx.personId, tx.date);
-      }
-    }
-
-    return people
-      .map((person) => ({
-        id: person.id,
-        name: person.name,
-        relationship: person.relationship,
-        tag: person.tag,
-        memo: person.memo,
-        lastTransactionAt: lastTransactionByPerson.get(person.id) ?? null,
-      }))
-      .filter((person) => person.lastTransactionAt !== null)
-      .sort(
-        (a, b) =>
-          (b.lastTransactionAt?.getTime() ?? 0) -
-          (a.lastTransactionAt?.getTime() ?? 0),
-      )
-      .slice(0, limit);
-  }
-
-  async listRecentlyUpdated(userId: string) {
+  async listRecent(userId: string, limit = 10) {
     const twoWeeksAgo = new Date();
     twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
 
-    const transactions = await this.transactionsRepository.find({
+    const recentTransactions = await this.transactionsRepository.find({
       where: { userId, date: MoreThanOrEqual(twoWeeksAgo) },
       order: { date: 'DESC' },
     });
 
-    if (transactions.length === 0) return [];
+    if (recentTransactions.length === 0) return [];
 
-    const personIds = [...new Set(transactions.map((tx) => tx.personId))];
+    const personIds = [...new Set(recentTransactions.map((tx) => tx.personId))];
     const people = await this.peopleRepository.findByIds(personIds);
 
     const allTransactions = await this.transactionsRepository.find({
@@ -110,7 +75,8 @@ export class PeopleService {
           totalAmount,
         };
       })
-      .filter((p) => p !== null);
+      .filter((p) => p !== null)
+      .slice(0, limit);
   }
 
   async getById(userId: string, id: string) {

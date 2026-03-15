@@ -46,20 +46,13 @@ export class PeopleController {
   }
 
   @Get('recent')
-  @ApiOperation({ summary: '최근 인물 목록 조회' })
+  @ApiOperation({ summary: '최근 2주 내 거래가 있었던 인물 목록 조회' })
   @ApiQuery({ name: 'limit', required: false, example: 5 })
-  @ApiOkResponse({ type: [PersonDto] })
+  @ApiOkResponse({ type: [RecentUpdatedPersonDto] })
   async listRecent(@CurrentUser() user: RequestUser, @Query('limit') limit?: string) {
     const parsedLimit = limit ? Number(limit) : undefined;
     const safeLimit = parsedLimit && !Number.isNaN(parsedLimit) ? parsedLimit : undefined;
     return this.peopleService.listRecent(user.id, safeLimit);
-  }
-
-  @Get('recently-updated')
-  @ApiOperation({ summary: '최근 2주 내 거래가 있는 인물 목록 조회' })
-  @ApiOkResponse({ type: [RecentUpdatedPersonDto] })
-  async listRecentlyUpdated(@CurrentUser() user: RequestUser) {
-    return this.peopleService.listRecentlyUpdated(user.id);
   }
 
   @Get(':id')
