@@ -26,8 +26,14 @@ export class PersonEntity {
   @Column({ length: 80 })
   name: string;
 
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  relationship?: string | null;
+
   @Column({ type: 'varchar', length: 40, nullable: true })
   tag?: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  memo?: string | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

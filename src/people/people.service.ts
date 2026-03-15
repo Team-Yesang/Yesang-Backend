@@ -25,7 +25,14 @@ export class PeopleService {
       const balance = transactions
         .filter((tx) => tx.personId === person.id)
         .reduce((sum, tx) => sum + tx.amount, 0);
-      return { ...person, balance };
+      return {
+        id: person.id,
+        name: person.name,
+        relationship: person.relationship,
+        tag: person.tag,
+        memo: person.memo,
+        balance,
+      };
     });
   }
 
@@ -45,7 +52,11 @@ export class PeopleService {
 
     return people
       .map((person) => ({
-        ...person,
+        id: person.id,
+        name: person.name,
+        relationship: person.relationship,
+        tag: person.tag,
+        memo: person.memo,
         lastTransactionAt: lastTransactionByPerson.get(person.id) ?? null,
       }))
       .filter((person) => person.lastTransactionAt !== null)
@@ -73,7 +84,11 @@ export class PeopleService {
     const totalAmount = transactions.reduce((sum, tx) => sum + tx.amount, 0);
 
     return {
-      ...person,
+      id: person.id,
+      name: person.name,
+      relationship: person.relationship,
+      tag: person.tag,
+      memo: person.memo,
       transactions,
       summary: {
         count: transactions.length,
@@ -91,7 +106,9 @@ export class PeopleService {
       id: randomUUID(),
       userId,
       name: payload.name,
+      relationship: payload.relationship ?? null,
       tag: payload.tag ?? null,
+      memo: payload.memo ?? null,
     });
 
     return this.peopleRepository.save(person);
@@ -110,13 +127,10 @@ export class PeopleService {
       throw new NotFoundException('Person not found');
     }
 
-    if (payload.name !== undefined) {
-      person.name = payload.name;
-    }
-
-    if (payload.tag !== undefined) {
-      person.tag = payload.tag ?? null;
-    }
+    if (payload.name !== undefined) person.name = payload.name;
+    if (payload.relationship !== undefined) person.relationship = payload.relationship ?? null;
+    if (payload.tag !== undefined) person.tag = payload.tag ?? null;
+    if (payload.memo !== undefined) person.memo = payload.memo ?? null;
 
     return this.peopleRepository.save(person);
   }
