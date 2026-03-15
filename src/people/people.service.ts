@@ -79,9 +79,19 @@ export class PeopleService {
 
     const transactions = await this.transactionsRepository.find({
       where: { userId, personId: person.id },
+      relations: ['event'],
+      order: { date: 'DESC' },
     });
 
     const totalAmount = transactions.reduce((sum, tx) => sum + tx.amount, 0);
+    const givenAmount = transactions
+      .filter((tx) => tx.amount > 0)
+      .reduce((sum, tx) => sum + tx.amount, 0);
+    const receivedAmount = Math.abs(
+      transactions
+        .filter((tx) => tx.amount < 0)
+        .reduce((sum, tx) => sum + tx.amount, 0),
+    );
 
     return {
       id: person.id,
@@ -89,11 +99,14 @@ export class PeopleService {
       relationship: person.relationship,
       tag: person.tag,
       memo: person.memo,
-      transactions,
-      summary: {
-        count: transactions.length,
-        totalAmount,
-      },
+      totalAmount,
+      givenAmount,
+      receivedAmount,
+      transactions: transactions.map((tx) => ({
+        title: tx.event?.eventName || tx.memo || '거래 내역',
+        date: tx.date.toISOString().split('T')[0],
+        amount: tx.amount,
+      })),
     };
   }
 

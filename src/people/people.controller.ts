@@ -22,7 +22,7 @@ import {
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthGuard } from '../common/guards/auth.guard';
 import type { RequestUser } from '../common/interfaces/request-with-user';
-import { CreatePersonDto, PersonDto } from './dto/create-person.dto';
+import { CreatePersonDto, PersonDetailDto, PersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
 import { PeopleService } from './people.service';
 
@@ -53,7 +53,7 @@ export class PeopleController {
   @Get(':id')
   @ApiOperation({ summary: '인물 단건 조회' })
   @ApiParam({ name: 'id', format: 'uuid' })
-  @ApiOkResponse({ type: PersonDto })
+  @ApiOkResponse({ type: PersonDetailDto })
   async getById(@CurrentUser() user: RequestUser, @Param('id') id: string) {
     return this.peopleService.getById(user.id, id);
   }

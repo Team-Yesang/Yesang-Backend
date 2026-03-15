@@ -30,3 +30,28 @@ export class PersonDto {
   @ApiPropertyOptional({ example: '고등학교 동창', nullable: true })
   memo: string | null;
 }
+
+export class PersonTransactionItemDto {
+  @ApiProperty({ example: '결혼식' })
+  title: string;
+
+  @ApiProperty({ example: '2026-02-26' })
+  date: string;
+
+  @ApiProperty({ example: 50000 })
+  amount: number;
+}
+
+export class PersonDetailDto extends PersonDto {
+  @ApiProperty({ example: 100000 })
+  totalAmount: number;
+
+  @ApiProperty({ example: 150000 })
+  givenAmount: number;
+
+  @ApiProperty({ example: 50000 })
+  receivedAmount: number;
+
+  @ApiProperty({ type: [PersonTransactionItemDto] })
+  transactions: PersonTransactionItemDto[];
+}
