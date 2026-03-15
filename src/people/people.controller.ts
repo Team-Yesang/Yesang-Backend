@@ -22,7 +22,7 @@ import {
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthGuard } from '../common/guards/auth.guard';
 import type { RequestUser } from '../common/interfaces/request-with-user';
-import { CreatePersonDto } from './dto/create-person.dto';
+import { CreatePersonDto, PersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
 import { PeopleService } from './people.service';
 
@@ -35,7 +35,7 @@ export class PeopleController {
 
   @Get()
   @ApiOperation({ summary: '인물 목록 조회' })
-  @ApiOkResponse({ description: '인물 목록' })
+  @ApiOkResponse({ type: [PersonDto] })
   async list(@CurrentUser() user: RequestUser) {
     return this.peopleService.list(user.id);
   }
@@ -43,7 +43,7 @@ export class PeopleController {
   @Get('recent')
   @ApiOperation({ summary: '최근 인물 목록 조회' })
   @ApiQuery({ name: 'limit', required: false, example: 5 })
-  @ApiOkResponse({ description: '최근 인물 목록' })
+  @ApiOkResponse({ type: [PersonDto] })
   async listRecent(@CurrentUser() user: RequestUser, @Query('limit') limit?: string) {
     const parsedLimit = limit ? Number(limit) : undefined;
     const safeLimit = parsedLimit && !Number.isNaN(parsedLimit) ? parsedLimit : undefined;
@@ -53,7 +53,7 @@ export class PeopleController {
   @Get(':id')
   @ApiOperation({ summary: '인물 단건 조회' })
   @ApiParam({ name: 'id', format: 'uuid' })
-  @ApiOkResponse({ description: '인물 상세' })
+  @ApiOkResponse({ type: PersonDto })
   async getById(@CurrentUser() user: RequestUser, @Param('id') id: string) {
     return this.peopleService.getById(user.id, id);
   }
@@ -61,7 +61,7 @@ export class PeopleController {
   @Post()
   @ApiOperation({ summary: '인물 생성' })
   @ApiBody({ type: CreatePersonDto })
-  @ApiCreatedResponse({ description: '인물 생성 완료' })
+  @ApiCreatedResponse({ type: PersonDto })
   async create(@CurrentUser() user: RequestUser, @Body() body: CreatePersonDto) {
     return this.peopleService.create(user.id, body);
   }
@@ -70,7 +70,7 @@ export class PeopleController {
   @ApiOperation({ summary: '인물 수정' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiBody({ type: UpdatePersonDto })
-  @ApiOkResponse({ description: '인물 수정 완료' })
+  @ApiOkResponse({ type: PersonDto })
   async update(
     @CurrentUser() user: RequestUser,
     @Param('id') id: string,

@@ -22,7 +22,7 @@ import {
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthGuard } from '../common/guards/auth.guard';
 import type { RequestUser } from '../common/interfaces/request-with-user';
-import { CreateEventDto } from './dto/create-event.dto';
+import { CreateEventDto, EventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 import { EventsService } from './events.service';
 
@@ -37,7 +37,7 @@ export class EventsController {
   @ApiOperation({ summary: '월별 이벤트 목록 조회' })
   @ApiQuery({ name: 'year', required: false, example: 2026 })
   @ApiQuery({ name: 'month', required: false, example: 2 })
-  @ApiOkResponse({ description: '이벤트 목록' })
+  @ApiOkResponse({ type: [EventDto] })
   async listByMonth(
     @CurrentUser() user: RequestUser,
     @Query('year') year?: string,
@@ -53,7 +53,7 @@ export class EventsController {
   @Get(':id')
   @ApiOperation({ summary: '이벤트 단건 조회' })
   @ApiParam({ name: 'id', format: 'uuid' })
-  @ApiOkResponse({ description: '이벤트 상세' })
+  @ApiOkResponse({ type: EventDto })
   async getById(@CurrentUser() user: RequestUser, @Param('id') id: string) {
     return this.eventsService.getById(user.id, id);
   }
@@ -61,7 +61,7 @@ export class EventsController {
   @Post()
   @ApiOperation({ summary: '이벤트 생성' })
   @ApiBody({ type: CreateEventDto })
-  @ApiCreatedResponse({ description: '이벤트 생성 완료' })
+  @ApiCreatedResponse({ type: EventDto })
   async create(@CurrentUser() user: RequestUser, @Body() body: CreateEventDto) {
     return this.eventsService.create(user.id, body);
   }
@@ -70,7 +70,7 @@ export class EventsController {
   @ApiOperation({ summary: '이벤트 수정' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiBody({ type: UpdateEventDto })
-  @ApiOkResponse({ description: '이벤트 수정 완료' })
+  @ApiOkResponse({ type: EventDto })
   async update(
     @CurrentUser() user: RequestUser,
     @Param('id') id: string,

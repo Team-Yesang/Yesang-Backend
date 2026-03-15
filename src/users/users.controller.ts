@@ -9,7 +9,7 @@ import {
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthGuard } from '../common/guards/auth.guard';
 import type { RequestUser } from '../common/interfaces/request-with-user';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserDto, UserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -21,7 +21,7 @@ export class UsersController {
 
   @Get('me')
   @ApiOperation({ summary: '내 프로필 조회' })
-  @ApiOkResponse({ description: '내 프로필' })
+  @ApiOkResponse({ type: UserDto })
   async getMe(@CurrentUser() user: RequestUser) {
     return this.usersService.getById(user.id);
   }
@@ -29,7 +29,7 @@ export class UsersController {
   @Patch('me')
   @ApiOperation({ summary: '내 프로필 수정' })
   @ApiBody({ type: UpdateUserDto })
-  @ApiOkResponse({ description: '수정된 프로필' })
+  @ApiOkResponse({ type: UserDto })
   async updateMe(@CurrentUser() user: RequestUser, @Body() body: UpdateUserDto) {
     return this.usersService.update(user.id, body);
   }

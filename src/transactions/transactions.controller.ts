@@ -22,7 +22,7 @@ import {
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthGuard } from '../common/guards/auth.guard';
 import type { RequestUser } from '../common/interfaces/request-with-user';
-import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { CreateTransactionDto, TransactionDto } from './dto/create-transaction.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionsService } from './transactions.service';
 
@@ -36,7 +36,7 @@ export class TransactionsController {
   @Get()
   @ApiOperation({ summary: '거래 내역 목록 조회' })
   @ApiQuery({ name: 'personId', required: false, format: 'uuid' })
-  @ApiOkResponse({ description: '거래 내역 목록' })
+  @ApiOkResponse({ type: [TransactionDto] })
   async list(
     @CurrentUser() user: RequestUser,
     @Query('personId') personId?: string,
@@ -47,7 +47,7 @@ export class TransactionsController {
   @Post()
   @ApiOperation({ summary: '거래 내역 생성' })
   @ApiBody({ type: CreateTransactionDto })
-  @ApiCreatedResponse({ description: '거래 내역 생성 완료' })
+  @ApiCreatedResponse({ type: TransactionDto })
   async create(@CurrentUser() user: RequestUser, @Body() body: CreateTransactionDto) {
     return this.transactionsService.create(user.id, body);
   }
@@ -56,7 +56,7 @@ export class TransactionsController {
   @ApiOperation({ summary: '거래 내역 수정' })
   @ApiParam({ name: 'id', format: 'uuid' })
   @ApiBody({ type: UpdateTransactionDto })
-  @ApiOkResponse({ description: '거래 내역 수정 완료' })
+  @ApiOkResponse({ type: TransactionDto })
   async update(
     @CurrentUser() user: RequestUser,
     @Param('id') id: string,

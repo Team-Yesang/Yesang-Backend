@@ -1,4 +1,4 @@
-import { ApiPropertyOptional } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class UpdateUserDto {
   @ApiPropertyOptional({ example: '홍길동' })
@@ -6,4 +6,27 @@ export class UpdateUserDto {
 
   @ApiPropertyOptional({ example: 'https://yesang.kr/avatar.png' })
   profileImage?: string;
+}
+
+export class UserDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ example: 'user@example.com' })
+  email: string;
+
+  @ApiProperty({ example: '홍길동' })
+  name: string;
+
+  @ApiProperty({ example: 'https://yesang.kr/avatar.png', nullable: true })
+  profileImage: string | null;
+
+  @ApiProperty({ example: 'KAKAO' })
+  provider: string;
+
+  @ApiProperty({ example: '2026-03-13T00:00:00.000Z' })
+  createdAt: Date;
+
+  @ApiProperty({ example: '2026-03-13T00:00:00.000Z' })
+  updatedAt: Date;
 }

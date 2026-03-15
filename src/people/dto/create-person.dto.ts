@@ -7,3 +7,20 @@ export class CreatePersonDto {
   @ApiPropertyOptional({ example: '직장' })
   tag?: string;
 }
+
+export class PersonDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ example: '김민수' })
+  name: string;
+
+  @ApiPropertyOptional({ example: '직장', nullable: true })
+  tag: string | null;
+
+  @ApiProperty({ example: '2026-03-13T00:00:00.000Z' })
+  createdAt: Date;
+
+  @ApiProperty({ example: '2026-03-13T00:00:00.000Z' })
+  updatedAt: Date;
+}

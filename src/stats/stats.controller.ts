@@ -10,6 +10,7 @@ import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthGuard } from '../common/guards/auth.guard';
 import type { RequestUser } from '../common/interfaces/request-with-user';
 import { StatsService } from './stats.service';
+import { YearSummaryDto } from './dto/stats-response.dto';
 
 @Controller('stats')
 @UseGuards(AuthGuard)
@@ -21,7 +22,7 @@ export class StatsController {
   @Get('summary')
   @ApiOperation({ summary: '연간 요약 조회' })
   @ApiQuery({ name: 'year', required: false, example: 2026 })
-  @ApiOkResponse({ description: '연간 요약' })
+  @ApiOkResponse({ type: YearSummaryDto })
   async getSummary(@CurrentUser() user: RequestUser, @Query('year') year?: string) {
     const parsed = year ? Number(year) : undefined;
     const parsedYear =
