@@ -55,3 +55,20 @@ export class PersonDetailDto extends PersonDto {
   @ApiProperty({ type: [PersonTransactionItemDto] })
   transactions: PersonTransactionItemDto[];
 }
+
+export class RecentUpdatedPersonDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+
+  @ApiProperty({ example: '김민수' })
+  name: string;
+
+  @ApiPropertyOptional({ example: '친구', nullable: true })
+  relationship: string | null;
+
+  @ApiProperty({ example: 50000 })
+  latestAmount: number;
+
+  @ApiProperty({ example: 150000 })
+  totalAmount: number;
+}

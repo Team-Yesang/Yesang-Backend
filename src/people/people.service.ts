@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { MoreThanOrEqual, Repository } from 'typeorm';
 import { PersonEntity, TransactionEntity } from '../database/entities';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
@@ -19,19 +19,22 @@ export class PeopleService {
     const people = await this.peopleRepository.find({ where: { userId } });
     if (people.length === 0) return [];
 
-    const transactions = await this.transactionsRepository.find({ where: { userId } });
+    const transactions = await this.transactionsRepository.find({
+      where: { userId },
+      order: { date: 'DESC' },
+    });
 
     return people.map((person) => {
-      const balance = transactions
-        .filter((tx) => tx.personId === person.id)
-        .reduce((sum, tx) => sum + tx.amount, 0);
+      const personTxs = transactions.filter((tx) => tx.personId === person.id);
+      const totalAmount = personTxs.reduce((sum, tx) => sum + tx.amount, 0);
+      const latestAmount = personTxs.length > 0 ? personTxs[0].amount : 0;
+
       return {
         id: person.id,
         name: person.name,
         relationship: person.relationship,
-        tag: person.tag,
-        memo: person.memo,
-        balance,
+        latestAmount,
+        totalAmount,
       };
     });
   }
@@ -40,9 +43,12 @@ export class PeopleService {
     const people = await this.peopleRepository.find({ where: { userId } });
     if (people.length === 0) return [];
 
-    const transactions = await this.transactionsRepository.find({ where: { userId } });
-    const lastTransactionByPerson = new Map<string, Date>();
+    const transactions = await this.transactionsRepository.find({
+      where: { userId },
+      order: { date: 'DESC' },
+    });
 
+    const lastTransactionByPerson = new Map<string, Date>();
     for (const tx of transactions) {
       const existing = lastTransactionByPerson.get(tx.personId);
       if (!existing || tx.date > existing) {
@@ -66,6 +72,45 @@ export class PeopleService {
           (a.lastTransactionAt?.getTime() ?? 0),
       )
       .slice(0, limit);
+  }
+
+  async listRecentlyUpdated(userId: string) {
+    const twoWeeksAgo = new Date();
+    twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+    const transactions = await this.transactionsRepository.find({
+      where: { userId, date: MoreThanOrEqual(twoWeeksAgo) },
+      order: { date: 'DESC' },
+    });
+
+    if (transactions.length === 0) return [];
+
+    const personIds = [...new Set(transactions.map((tx) => tx.personId))];
+    const people = await this.peopleRepository.findByIds(personIds);
+
+    const allTransactions = await this.transactionsRepository.find({
+      where: { userId },
+      order: { date: 'DESC' },
+    });
+
+    return personIds
+      .map((personId) => {
+        const person = people.find((p) => p.id === personId);
+        if (!person) return null;
+
+        const personTxs = allTransactions.filter((tx) => tx.personId === personId);
+        const totalAmount = personTxs.reduce((sum, tx) => sum + tx.amount, 0);
+        const latestAmount = personTxs.length > 0 ? personTxs[0].amount : 0;
+
+        return {
+          id: person.id,
+          name: person.name,
+          relationship: person.relationship,
+          latestAmount,
+          totalAmount,
+        };
+      })
+      .filter((p) => p !== null);
   }
 
   async getById(userId: string, id: string) {

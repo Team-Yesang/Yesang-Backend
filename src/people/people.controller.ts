@@ -22,7 +22,12 @@ import {
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthGuard } from '../common/guards/auth.guard';
 import type { RequestUser } from '../common/interfaces/request-with-user';
-import { CreatePersonDto, PersonDetailDto, PersonDto } from './dto/create-person.dto';
+import {
+  CreatePersonDto,
+  PersonDetailDto,
+  PersonDto,
+  RecentUpdatedPersonDto,
+} from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
 import { PeopleService } from './people.service';
 
@@ -35,7 +40,7 @@ export class PeopleController {
 
   @Get()
   @ApiOperation({ summary: '인물 목록 조회' })
-  @ApiOkResponse({ type: [PersonDto] })
+  @ApiOkResponse({ type: [RecentUpdatedPersonDto] })
   async list(@CurrentUser() user: RequestUser) {
     return this.peopleService.list(user.id);
   }
@@ -48,6 +53,13 @@ export class PeopleController {
     const parsedLimit = limit ? Number(limit) : undefined;
     const safeLimit = parsedLimit && !Number.isNaN(parsedLimit) ? parsedLimit : undefined;
     return this.peopleService.listRecent(user.id, safeLimit);
+  }
+
+  @Get('recently-updated')
+  @ApiOperation({ summary: '최근 2주 내 거래가 있는 인물 목록 조회' })
+  @ApiOkResponse({ type: [RecentUpdatedPersonDto] })
+  async listRecentlyUpdated(@CurrentUser() user: RequestUser) {
+    return this.peopleService.listRecentlyUpdated(user.id);
   }
 
   @Get(':id')
