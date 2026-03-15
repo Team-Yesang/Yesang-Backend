@@ -23,10 +23,4 @@ export class UserDto {
 
   @ApiProperty({ example: 'KAKAO' })
   provider: string;
-
-  @ApiProperty({ example: '2026-03-13T00:00:00.000Z' })
-  createdAt: Date;
-
-  @ApiProperty({ example: '2026-03-13T00:00:00.000Z' })
-  updatedAt: Date;
 }
