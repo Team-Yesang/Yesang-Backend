@@ -17,10 +17,4 @@ export class PersonDto {
 
   @ApiPropertyOptional({ example: '직장', nullable: true })
   tag: string | null;
-
-  @ApiProperty({ example: '2026-03-13T00:00:00.000Z' })
-  createdAt: Date;
-
-  @ApiProperty({ example: '2026-03-13T00:00:00.000Z' })
-  updatedAt: Date;
 }

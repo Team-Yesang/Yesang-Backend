@@ -29,10 +29,4 @@ export class EventDto {
 
   @ApiPropertyOptional({ example: '친구 결혼식 참석', nullable: true })
   memo: string | null;
-
-  @ApiProperty({ example: '2026-03-13T00:00:00.000Z' })
-  createdAt: Date;
-
-  @ApiProperty({ example: '2026-03-13T00:00:00.000Z' })
-  updatedAt: Date;
 }
