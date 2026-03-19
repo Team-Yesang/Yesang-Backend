@@ -159,11 +159,11 @@ export class EventsService {
     }
 
     const currentPaidAmount = existingTransactions
-      .filter((tx) => tx.amount > 0)
-      .reduce((sum, tx) => sum + tx.amount, 0);
-    const currentReceivedAmount = existingTransactions
       .filter((tx) => tx.amount < 0)
       .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+    const currentReceivedAmount = existingTransactions
+      .filter((tx) => tx.amount > 0)
+      .reduce((sum, tx) => sum + tx.amount, 0);
 
     const nextPaidAmount =
       payload.paidAmount !== undefined
@@ -239,7 +239,7 @@ export class EventsService {
     }
 
     const nextTransactions: TransactionEntity[] = [];
-    const amount = paidAmount > 0 ? paidAmount : receivedAmount > 0 ? -receivedAmount : 0;
+    const amount = paidAmount > 0 ? -paidAmount : receivedAmount > 0 ? receivedAmount : 0;
 
     if (amount !== 0) {
       nextTransactions.push(
@@ -295,11 +295,11 @@ export class EventsService {
             }
           : null,
         paidAmount: eventTransactions
-          .filter((tx) => tx.amount > 0)
-          .reduce((sum, tx) => sum + tx.amount, 0),
-        receivedAmount: eventTransactions
           .filter((tx) => tx.amount < 0)
           .reduce((sum, tx) => sum + Math.abs(tx.amount), 0),
+        receivedAmount: eventTransactions
+          .filter((tx) => tx.amount > 0)
+          .reduce((sum, tx) => sum + tx.amount, 0),
         memo: event.memo ?? null,
       };
     });

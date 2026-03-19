@@ -18,13 +18,13 @@ export class StatsService {
     });
 
     const totalSent = transactions
-      .filter((tx) => tx.amount > 0)
-      .reduce((sum, tx) => sum + tx.amount, 0);
-    const totalReceived = transactions
       .filter((tx) => tx.amount < 0)
       .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+    const totalReceived = transactions
+      .filter((tx) => tx.amount > 0)
+      .reduce((sum, tx) => sum + tx.amount, 0);
 
-    const net = totalSent - totalReceived;
+    const net = totalReceived - totalSent;
 
     return {
       year,

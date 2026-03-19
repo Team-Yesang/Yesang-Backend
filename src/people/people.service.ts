@@ -98,13 +98,11 @@ export class PeopleService {
 
     const totalAmount = transactions.reduce((sum, tx) => sum + tx.amount, 0);
     const givenAmount = transactions
+      .filter((tx) => tx.amount < 0)
+      .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+    const receivedAmount = transactions
       .filter((tx) => tx.amount > 0)
       .reduce((sum, tx) => sum + tx.amount, 0);
-    const receivedAmount = Math.abs(
-      transactions
-        .filter((tx) => tx.amount < 0)
-        .reduce((sum, tx) => sum + tx.amount, 0),
-    );
 
     return {
       id: person.id,
