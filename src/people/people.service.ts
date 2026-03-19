@@ -87,7 +87,7 @@ export class PeopleService {
     });
 
     if (!person) {
-      throw new NotFoundException('Person not found');
+      throw new NotFoundException('인물을 찾을 수 없습니다.');
     }
 
     const transactions = await this.transactionsRepository.find({
@@ -125,7 +125,7 @@ export class PeopleService {
 
   async create(userId: string, payload: CreatePersonDto): Promise<PersonEntity> {
     if (!payload?.name) {
-      throw new BadRequestException('name is required');
+      throw new BadRequestException('이름은 필수입니다.');
     }
 
     const person = this.peopleRepository.create({
@@ -150,7 +150,7 @@ export class PeopleService {
     });
 
     if (!person) {
-      throw new NotFoundException('Person not found');
+      throw new NotFoundException('인물을 찾을 수 없습니다.');
     }
 
     if (payload.name !== undefined) person.name = payload.name;
@@ -167,7 +167,7 @@ export class PeopleService {
     });
 
     if (!person) {
-      throw new NotFoundException('Person not found');
+      throw new NotFoundException('인물을 찾을 수 없습니다.');
     }
 
     const transactions = await this.transactionsRepository.find({

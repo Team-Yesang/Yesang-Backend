@@ -63,7 +63,7 @@ export class EventsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException('이벤트를 찾을 수 없습니다.');
     }
 
     const [response] = await this.buildEventResponses(userId, [event]);
@@ -73,19 +73,19 @@ export class EventsService {
   async create(userId: string, payload: CreateEventDto): Promise<EventDto> {
     const requestedPersonId = payload?.personId ?? payload?.person;
     if (!payload?.date || !payload?.eventName || !requestedPersonId) {
-      throw new BadRequestException('date, eventName, personId are required');
+      throw new BadRequestException('날짜, 이벤트 이름, 인물 ID는 필수입니다.');
     }
 
     const eventDate = new Date(payload.date);
     if (Number.isNaN(eventDate.getTime())) {
-      throw new BadRequestException('Invalid date');
+      throw new BadRequestException('올바른 날짜 형식이 아닙니다.');
     }
 
     const person = await this.peopleRepository.findOne({
       where: { id: requestedPersonId, userId },
     });
     if (!person) {
-      throw new BadRequestException('Invalid personId');
+      throw new BadRequestException('유효하지 않은 인물 ID입니다.');
     }
 
     const paidAmount = this.normalizeAmount(payload.paidAmount);
@@ -116,7 +116,7 @@ export class EventsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException('이벤트를 찾을 수 없습니다.');
     }
 
     const existingTransactions = await this.transactionsRepository.find({
@@ -127,7 +127,7 @@ export class EventsService {
     if (payload.date !== undefined) {
       const eventDate = new Date(payload.date);
       if (Number.isNaN(eventDate.getTime())) {
-        throw new BadRequestException('Invalid date');
+        throw new BadRequestException('올바른 날짜 형식이 아닙니다.');
       }
       event.date = eventDate;
     }
@@ -148,14 +148,14 @@ export class EventsService {
     const nextPersonId = payload.personId ?? payload.person ?? currentPersonId;
 
     if (!nextPersonId) {
-      throw new BadRequestException('personId is required');
+      throw new BadRequestException('인물 ID는 필수입니다.');
     }
 
     const person = await this.peopleRepository.findOne({
       where: { id: nextPersonId, userId },
     });
     if (!person) {
-      throw new BadRequestException('Invalid personId');
+      throw new BadRequestException('유효하지 않은 인물 ID입니다.');
     }
 
     const currentPaidAmount = existingTransactions
@@ -193,7 +193,7 @@ export class EventsService {
     });
 
     if (!event) {
-      throw new NotFoundException('Event not found');
+      throw new NotFoundException('이벤트를 찾을 수 없습니다.');
     }
 
     const transactions = await this.transactionsRepository.find({
@@ -210,7 +210,7 @@ export class EventsService {
       return 0;
     }
     if (!Number.isFinite(amount) || amount < 0) {
-      throw new BadRequestException('Amounts must be non-negative numbers');
+      throw new BadRequestException('금액은 0 이상의 숫자여야 합니다.');
     }
     return amount;
   }
@@ -218,7 +218,7 @@ export class EventsService {
   private validateEventAmounts(paidAmount: number, receivedAmount: number) {
     if (paidAmount > 0 && receivedAmount > 0) {
       throw new BadRequestException(
-        'Event and transaction are 1:1, so only one of paidAmount or receivedAmount can be greater than 0',
+        '이벤트와 거래내역은 1:1 관계이므로 낸 금액과 받은 금액 중 하나만 0보다 클 수 있습니다.',
       );
     }
   }

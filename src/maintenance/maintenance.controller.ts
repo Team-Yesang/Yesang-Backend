@@ -33,7 +33,7 @@ export class MaintenanceController {
   @SkipMaintenance()
   @ApiOperation({ summary: '서버 점검 상태 변경' })
   @ApiBody({ type: UpdateMaintenanceDto })
-  @ApiForbiddenResponse({ schema: { example: { message: 'Invalid maintenance password' } } })
+  @ApiForbiddenResponse({ schema: { example: { message: '점검 모드 비밀번호가 올바르지 않습니다.' } } })
   @ApiOkResponse({
     schema: {
       example: {
@@ -48,7 +48,7 @@ export class MaintenanceController {
     );
 
     if (!updated) {
-      throw new ForbiddenException('Invalid maintenance password');
+      throw new ForbiddenException('점검 모드 비밀번호가 올바르지 않습니다.');
     }
 
     return this.maintenanceService.getStatus();

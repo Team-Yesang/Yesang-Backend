@@ -23,7 +23,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     const user = await this.usersRepository.findOne({ where: { id } });
 
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('인증 정보가 유효하지 않습니다.');
     }
 
     return user;

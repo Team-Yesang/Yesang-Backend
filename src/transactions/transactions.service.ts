@@ -35,7 +35,7 @@ export class TransactionsService {
       where: { id: personId, userId },
     });
     if (!person) {
-      throw new NotFoundException('Person not found');
+      throw new NotFoundException('인물을 찾을 수 없습니다.');
     }
 
     const transactions = await this.transactionsRepository.find({
@@ -65,28 +65,28 @@ export class TransactionsService {
     payload: CreateTransactionDto,
   ): Promise<TransactionEntity> {
     if (!payload?.personId || !payload?.eventId || payload.amount === undefined) {
-      throw new BadRequestException('personId, eventId, amount are required');
+      throw new BadRequestException('인물 ID, 이벤트 ID, 금액은 필수입니다.');
     }
 
     const person = await this.peopleRepository.findOne({
       where: { id: payload.personId, userId },
     });
     if (!person) {
-      throw new BadRequestException('Invalid personId');
+      throw new BadRequestException('유효하지 않은 인물 ID입니다.');
     }
 
     const event = await this.eventsRepository.findOne({
       where: { id: payload.eventId, userId },
     });
     if (!event) {
-      throw new BadRequestException('Invalid eventId');
+      throw new BadRequestException('유효하지 않은 이벤트 ID입니다.');
     }
 
     const existingTransaction = await this.transactionsRepository.findOne({
       where: { userId, eventId: payload.eventId },
     });
     if (existingTransaction) {
-      throw new BadRequestException('This event is already linked to another transaction');
+      throw new BadRequestException('이미 다른 거래내역에 연결된 이벤트입니다.');
     }
 
     const transaction = this.transactionsRepository.create({
@@ -112,7 +112,7 @@ export class TransactionsService {
     });
 
     if (!transaction) {
-      throw new NotFoundException('Transaction not found');
+      throw new NotFoundException('거래내역을 찾을 수 없습니다.');
     }
 
     if (payload.personId !== undefined) {
@@ -120,7 +120,7 @@ export class TransactionsService {
         where: { id: payload.personId, userId },
       });
       if (!person) {
-        throw new BadRequestException('Invalid personId');
+        throw new BadRequestException('유효하지 않은 인물 ID입니다.');
       }
       transaction.personId = payload.personId;
     }
@@ -134,14 +134,14 @@ export class TransactionsService {
         where: { id: payload.eventId, userId },
       });
       if (!event) {
-        throw new BadRequestException('Invalid eventId');
+        throw new BadRequestException('유효하지 않은 이벤트 ID입니다.');
       }
 
       const existingTransaction = await this.transactionsRepository.findOne({
         where: { userId, eventId: payload.eventId },
       });
       if (existingTransaction && existingTransaction.id !== transaction.id) {
-        throw new BadRequestException('This event is already linked to another transaction');
+        throw new BadRequestException('이미 다른 거래내역에 연결된 이벤트입니다.');
       }
 
       transaction.eventId = event.id;
@@ -161,7 +161,7 @@ export class TransactionsService {
     });
 
     if (!transaction) {
-      throw new NotFoundException('Transaction not found');
+      throw new NotFoundException('거래내역을 찾을 수 없습니다.');
     }
 
     await this.transactionsRepository.remove(transaction);

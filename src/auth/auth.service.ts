@@ -22,7 +22,7 @@ export class AuthService {
     const { email, name, profileImage, provider } = payload;
 
     if (!email) {
-      throw new BadRequestException('Email is required from OAuth provider');
+      throw new BadRequestException('소셜 로그인 제공자로부터 이메일을 받을 수 없습니다.');
     }
 
     let user = await this.usersRepository.findOne({
@@ -64,7 +64,7 @@ export class AuthService {
       });
 
       if (!user) {
-        throw new UnauthorizedException('Invalid refresh token');
+        throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
       }
 
       const jwtPayload = { sub: user.id, email: user.email };
@@ -79,7 +79,7 @@ export class AuthService {
         refreshToken: newRefreshToken,
       };
     } catch (e) {
-      throw new UnauthorizedException('Invalid refresh token');
+      throw new UnauthorizedException('유효하지 않은 리프레시 토큰입니다.');
     }
   }
 

@@ -14,7 +14,7 @@ export class UsersService {
   async getById(userId: string): Promise<UserEntity> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
     }
     return user;
   }
@@ -36,7 +36,7 @@ export class UsersService {
   async remove(userId: string): Promise<void> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
     }
 
     await this.usersRepository.remove(user);
