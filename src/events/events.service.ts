@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Between, In, Repository } from 'typeorm';
 import { EventEntity, PersonEntity, TransactionEntity } from '../database/entities';
-import { CreateEventDto } from './dto/create-event.dto';
+import { CreateEventDto, EventDto } from './dto/create-event.dto';
 import { UpdateEventDto } from './dto/update-event.dto';
 
 @Injectable()
@@ -18,17 +18,24 @@ export class EventsService {
   ) {}
 
   async listByMonth(userId: string, year?: number, month?: number) {
-    if (!year || !month) {
-      return this.eventsRepository.find({ where: { userId } });
-    }
+    const events =
+      !year || !month
+        ? await this.eventsRepository.find({
+            where: { userId },
+            order: { date: 'ASC' },
+          })
+        : await this.eventsRepository.find({
+            where: {
+              userId,
+              date: Between(
+                new Date(year, month - 1, 1, 0, 0, 0, 0),
+                new Date(year, month, 0, 23, 59, 59, 999),
+              ),
+            },
+            order: { date: 'ASC' },
+          });
 
-    const start = new Date(year, month - 1, 1, 0, 0, 0, 0);
-    const end = new Date(year, month, 0, 23, 59, 59, 999);
-
-    return this.eventsRepository.find({
-      where: { userId, date: Between(start, end) },
-      order: { date: 'ASC' },
-    });
+    return this.buildEventResponses(userId, events);
   }
 
   async getById(userId: string, id: string) {
@@ -40,43 +47,30 @@ export class EventsService {
       throw new NotFoundException('Event not found');
     }
 
-    const transactions = await this.transactionsRepository.find({
-      where: { userId, eventId: event.id },
-    });
-
-    const totalAmount = transactions.reduce((sum, tx) => sum + tx.amount, 0);
-    const personIds = Array.from(new Set(transactions.map((tx) => tx.personId)));
-    const people =
-      personIds.length > 0
-        ? await this.peopleRepository.findBy({ id: In(personIds) })
-        : [];
-    const byPerson = people.map((person) => ({
-      personId: person.id,
-      name: person.name,
-      totalAmount: transactions
-        .filter((tx) => tx.personId === person.id)
-        .reduce((sum, tx) => sum + tx.amount, 0),
-    }));
-
-    return {
-      ...event,
-      transactions,
-      summary: {
-        totalAmount,
-        byPerson,
-      },
-    };
+    const [response] = await this.buildEventResponses(userId, [event]);
+    return response;
   }
 
-  async create(userId: string, payload: CreateEventDto): Promise<EventEntity> {
-    if (!payload?.date || !payload?.eventName) {
-      throw new BadRequestException('date and eventName are required');
+  async create(userId: string, payload: CreateEventDto): Promise<EventDto> {
+    const requestedPersonId = payload?.personId ?? payload?.person;
+    if (!payload?.date || !payload?.eventName || !requestedPersonId) {
+      throw new BadRequestException('date, eventName, personId are required');
     }
 
     const eventDate = new Date(payload.date);
     if (Number.isNaN(eventDate.getTime())) {
       throw new BadRequestException('Invalid date');
     }
+
+    const person = await this.peopleRepository.findOne({
+      where: { id: requestedPersonId, userId },
+    });
+    if (!person) {
+      throw new BadRequestException('Invalid personId');
+    }
+
+    const paidAmount = this.normalizeAmount(payload.paidAmount);
+    const receivedAmount = this.normalizeAmount(payload.receivedAmount);
 
     const event = this.eventsRepository.create({
       id: randomUUID(),
@@ -87,14 +81,16 @@ export class EventsService {
       memo: payload.memo ?? null,
     });
 
-    return this.eventsRepository.save(event);
+    const savedEvent = await this.eventsRepository.save(event);
+    await this.replaceEventTransactions(userId, savedEvent, person.id, paidAmount, receivedAmount);
+    return this.getById(userId, savedEvent.id);
   }
 
   async update(
     userId: string,
     id: string,
     payload: UpdateEventDto,
-  ): Promise<EventEntity> {
+  ): Promise<EventDto> {
     const event = await this.eventsRepository.findOne({
       where: { id, userId },
     });
@@ -102,6 +98,11 @@ export class EventsService {
     if (!event) {
       throw new NotFoundException('Event not found');
     }
+
+    const existingTransactions = await this.transactionsRepository.find({
+      where: { userId, eventId: event.id },
+      order: { createdAt: 'ASC' },
+    });
 
     if (payload.date !== undefined) {
       const eventDate = new Date(payload.date);
@@ -123,7 +124,41 @@ export class EventsService {
       event.memo = payload.memo ?? null;
     }
 
-    return this.eventsRepository.save(event);
+    const currentPersonId = existingTransactions[0]?.personId ?? null;
+    const nextPersonId = payload.personId ?? payload.person ?? currentPersonId;
+
+    if (!nextPersonId) {
+      throw new BadRequestException('personId is required');
+    }
+
+    const person = await this.peopleRepository.findOne({
+      where: { id: nextPersonId, userId },
+    });
+    if (!person) {
+      throw new BadRequestException('Invalid personId');
+    }
+
+    const currentPaidAmount = existingTransactions
+      .filter((tx) => tx.amount > 0)
+      .reduce((sum, tx) => sum + tx.amount, 0);
+    const currentReceivedAmount = existingTransactions
+      .filter((tx) => tx.amount < 0)
+      .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
+
+    const savedEvent = await this.eventsRepository.save(event);
+    await this.replaceEventTransactions(
+      userId,
+      savedEvent,
+      person.id,
+      payload.paidAmount !== undefined
+        ? this.normalizeAmount(payload.paidAmount)
+        : currentPaidAmount,
+      payload.receivedAmount !== undefined
+        ? this.normalizeAmount(payload.receivedAmount)
+        : currentReceivedAmount,
+    );
+
+    return this.getById(userId, savedEvent.id);
   }
 
   async remove(userId: string, id: string): Promise<void> {
@@ -135,10 +170,117 @@ export class EventsService {
       throw new NotFoundException('Event not found');
     }
 
-    await this.transactionsRepository.update(
-      { userId, eventId: id },
-      { eventId: null },
-    );
+    const transactions = await this.transactionsRepository.find({
+      where: { userId, eventId: id },
+    });
+    if (transactions.length > 0) {
+      await this.transactionsRepository.remove(transactions);
+    }
     await this.eventsRepository.remove(event);
+  }
+
+  private normalizeAmount(amount?: number): number {
+    if (amount === undefined || amount === null) {
+      return 0;
+    }
+    if (!Number.isFinite(amount) || amount < 0) {
+      throw new BadRequestException('Amounts must be non-negative numbers');
+    }
+    return amount;
+  }
+
+  private async replaceEventTransactions(
+    userId: string,
+    event: EventEntity,
+    personId: string,
+    paidAmount: number,
+    receivedAmount: number,
+  ) {
+    const existingTransactions = await this.transactionsRepository.find({
+      where: { userId, eventId: event.id },
+    });
+
+    if (existingTransactions.length > 0) {
+      await this.transactionsRepository.remove(existingTransactions);
+    }
+
+    const nextTransactions: TransactionEntity[] = [];
+
+    if (paidAmount > 0) {
+      nextTransactions.push(
+        this.transactionsRepository.create({
+          id: randomUUID(),
+          userId,
+          personId,
+          eventId: event.id,
+          amount: paidAmount,
+          date: event.date,
+          memo: null,
+        }),
+      );
+    }
+
+    if (receivedAmount > 0) {
+      nextTransactions.push(
+        this.transactionsRepository.create({
+          id: randomUUID(),
+          userId,
+          personId,
+          eventId: event.id,
+          amount: -receivedAmount,
+          date: event.date,
+          memo: null,
+        }),
+      );
+    }
+
+    if (nextTransactions.length > 0) {
+      await this.transactionsRepository.save(nextTransactions);
+    }
+  }
+
+  private async buildEventResponses(userId: string, events: EventEntity[]) {
+    if (events.length === 0) {
+      return [];
+    }
+
+    const eventIds = events.map((event) => event.id);
+    const transactions = await this.transactionsRepository.find({
+      where: { userId, eventId: In(eventIds) },
+      order: { createdAt: 'ASC' },
+    });
+    const personIds = Array.from(new Set(transactions.map((tx) => tx.personId)));
+    const people =
+      personIds.length > 0
+        ? await this.peopleRepository.findBy({ id: In(personIds), userId })
+        : [];
+    const peopleById = new Map(people.map((person) => [person.id, person]));
+
+    return events.map((event) => {
+      const eventTransactions = transactions.filter((tx) => tx.eventId === event.id);
+      const person = eventTransactions.length
+        ? peopleById.get(eventTransactions[0].personId) ?? null
+        : null;
+
+      return {
+        id: event.id,
+        date: event.date.toISOString().split('T')[0],
+        eventName: event.eventName,
+        site: event.site ?? null,
+        person: person
+          ? {
+              id: person.id,
+              name: person.name,
+            }
+          : null,
+        paidAmount: eventTransactions
+          .filter((tx) => tx.amount > 0)
+          .reduce((sum, tx) => sum + tx.amount, 0),
+        receivedAmount: eventTransactions
+          .filter((tx) => tx.amount < 0)
+          .reduce((sum, tx) => sum + Math.abs(tx.amount), 0),
+        memo: event.memo ?? null,
+      };
+    });
   }
 }

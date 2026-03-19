@@ -83,7 +83,7 @@ export class TransactionsService {
     let eventId: string | null = null;
     if (payload.title) {
       let event = await this.eventsRepository.findOne({
-        where: { userId, eventName: payload.title, date: payload.date },
+        where: { userId, eventName: payload.title, date: txDate },
       });
 
       if (!event) {
@@ -148,9 +148,13 @@ export class TransactionsService {
 
     if (payload.title !== undefined) {
       if (payload.title) {
-        const dateStr = payload.date || transaction.date.toISOString().split('T')[0];
+        const eventDate =
+          payload.date !== undefined ? new Date(payload.date) : transaction.date;
+        if (Number.isNaN(eventDate.getTime())) {
+          throw new BadRequestException('Invalid date');
+        }
         let event = await this.eventsRepository.findOne({
-          where: { userId, eventName: payload.title, date: dateStr },
+          where: { userId, eventName: payload.title, date: eventDate },
         });
 
         if (!event) {
@@ -158,7 +162,7 @@ export class TransactionsService {
             id: randomUUID(),
             userId,
             eventName: payload.title,
-            date: dateStr,
+            date: eventDate,
           });
           event = await this.eventsRepository.save(event);
         }
