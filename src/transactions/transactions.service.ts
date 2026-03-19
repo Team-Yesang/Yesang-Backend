@@ -134,18 +134,6 @@ export class TransactionsService {
       transaction.personId = payload.personId;
     }
 
-    if (payload.eventId !== undefined) {
-      if (payload.eventId) {
-        const event = await this.eventsRepository.findOne({
-          where: { id: payload.eventId, userId },
-        });
-        if (!event) {
-          throw new BadRequestException('Invalid eventId');
-        }
-      }
-      transaction.eventId = payload.eventId ?? null;
-    }
-
     if (payload.amount !== undefined) {
       transaction.amount = payload.amount;
     }
@@ -156,6 +144,28 @@ export class TransactionsService {
         throw new BadRequestException('Invalid date');
       }
       transaction.date = txDate;
+    }
+
+    if (payload.title !== undefined) {
+      if (payload.title) {
+        const dateStr = payload.date || transaction.date.toISOString().split('T')[0];
+        let event = await this.eventsRepository.findOne({
+          where: { userId, eventName: payload.title, date: dateStr },
+        });
+
+        if (!event) {
+          event = this.eventsRepository.create({
+            id: randomUUID(),
+            userId,
+            eventName: payload.title,
+            date: dateStr,
+          });
+          event = await this.eventsRepository.save(event);
+        }
+        transaction.eventId = event.id;
+      } else {
+        transaction.eventId = null;
+      }
     }
 
     if (payload.memo !== undefined) {

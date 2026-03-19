@@ -114,6 +114,7 @@ export class PeopleService {
       givenAmount,
       receivedAmount,
       transactions: transactions.map((tx) => ({
+        id: tx.id,
         title: tx.event?.eventName || tx.memo || '거래 내역',
         date: tx.date.toISOString().split('T')[0],
         amount: tx.amount,

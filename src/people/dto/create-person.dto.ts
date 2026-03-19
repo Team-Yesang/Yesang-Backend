@@ -32,6 +32,9 @@ export class PersonDto {
 }
 
 export class PersonTransactionItemDto {
+  @ApiProperty({ format: 'uuid' })
+  id: string;
+
   @ApiProperty({ example: '결혼식' })
   title: string;
 
