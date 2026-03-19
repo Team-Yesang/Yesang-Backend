@@ -64,8 +64,8 @@ export class TransactionsService {
     userId: string,
     payload: CreateTransactionDto,
   ): Promise<TransactionEntity> {
-    if (!payload?.personId || payload.amount === undefined || !payload?.date) {
-      throw new BadRequestException('personId, amount, date are required');
+    if (!payload?.personId || !payload?.eventId || payload.amount === undefined) {
+      throw new BadRequestException('personId, eventId, amount are required');
     }
 
     const person = await this.peopleRepository.findOne({
@@ -75,36 +75,27 @@ export class TransactionsService {
       throw new BadRequestException('Invalid personId');
     }
 
-    const txDate = new Date(payload.date);
-    if (Number.isNaN(txDate.getTime())) {
-      throw new BadRequestException('Invalid date');
+    const event = await this.eventsRepository.findOne({
+      where: { id: payload.eventId, userId },
+    });
+    if (!event) {
+      throw new BadRequestException('Invalid eventId');
     }
 
-    let eventId: string | null = null;
-    if (payload.title) {
-      let event = await this.eventsRepository.findOne({
-        where: { userId, eventName: payload.title, date: txDate },
-      });
-
-      if (!event) {
-        event = this.eventsRepository.create({
-          id: randomUUID(),
-          userId,
-          eventName: payload.title,
-          date: payload.date,
-        });
-        event = await this.eventsRepository.save(event);
-      }
-      eventId = event.id;
+    const existingTransaction = await this.transactionsRepository.findOne({
+      where: { userId, eventId: payload.eventId },
+    });
+    if (existingTransaction) {
+      throw new BadRequestException('This event is already linked to another transaction');
     }
 
     const transaction = this.transactionsRepository.create({
       id: randomUUID(),
       userId,
       personId: payload.personId,
-      eventId,
+      eventId: event.id,
       amount: payload.amount,
-      date: txDate,
+      date: event.date,
       memo: payload.memo ?? null,
     });
 
@@ -138,38 +129,23 @@ export class TransactionsService {
       transaction.amount = payload.amount;
     }
 
-    if (payload.date !== undefined) {
-      const txDate = new Date(payload.date);
-      if (Number.isNaN(txDate.getTime())) {
-        throw new BadRequestException('Invalid date');
+    if (payload.eventId !== undefined) {
+      const event = await this.eventsRepository.findOne({
+        where: { id: payload.eventId, userId },
+      });
+      if (!event) {
+        throw new BadRequestException('Invalid eventId');
       }
-      transaction.date = txDate;
-    }
 
-    if (payload.title !== undefined) {
-      if (payload.title) {
-        const eventDate =
-          payload.date !== undefined ? new Date(payload.date) : transaction.date;
-        if (Number.isNaN(eventDate.getTime())) {
-          throw new BadRequestException('Invalid date');
-        }
-        let event = await this.eventsRepository.findOne({
-          where: { userId, eventName: payload.title, date: eventDate },
-        });
-
-        if (!event) {
-          event = this.eventsRepository.create({
-            id: randomUUID(),
-            userId,
-            eventName: payload.title,
-            date: eventDate,
-          });
-          event = await this.eventsRepository.save(event);
-        }
-        transaction.eventId = event.id;
-      } else {
-        transaction.eventId = null;
+      const existingTransaction = await this.transactionsRepository.findOne({
+        where: { userId, eventId: payload.eventId },
+      });
+      if (existingTransaction && existingTransaction.id !== transaction.id) {
+        throw new BadRequestException('This event is already linked to another transaction');
       }
+
+      transaction.eventId = event.id;
+      transaction.date = event.date;
     }
 
     if (payload.memo !== undefined) {
@@ -189,5 +165,8 @@ export class TransactionsService {
     }
 
     await this.transactionsRepository.remove(transaction);
+    if (transaction.eventId) {
+      await this.eventsRepository.delete({ id: transaction.eventId, userId });
+    }
   }
 }

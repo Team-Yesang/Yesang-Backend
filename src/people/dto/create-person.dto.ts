@@ -35,6 +35,9 @@ export class PersonTransactionItemDto {
   @ApiProperty({ format: 'uuid' })
   id: string;
 
+  @ApiPropertyOptional({ format: 'uuid', nullable: true })
+  eventId: string | null;
+
   @ApiProperty({ example: '결혼식' })
   title: string;
 

@@ -90,6 +90,7 @@ export class EventsService {
 
     const paidAmount = this.normalizeAmount(payload.paidAmount);
     const receivedAmount = this.normalizeAmount(payload.receivedAmount);
+    this.validateEventAmounts(paidAmount, receivedAmount);
 
     const event = this.eventsRepository.create({
       id: randomUUID(),
@@ -164,17 +165,23 @@ export class EventsService {
       .filter((tx) => tx.amount < 0)
       .reduce((sum, tx) => sum + Math.abs(tx.amount), 0);
 
+    const nextPaidAmount =
+      payload.paidAmount !== undefined
+        ? this.normalizeAmount(payload.paidAmount)
+        : currentPaidAmount;
+    const nextReceivedAmount =
+      payload.receivedAmount !== undefined
+        ? this.normalizeAmount(payload.receivedAmount)
+        : currentReceivedAmount;
+    this.validateEventAmounts(nextPaidAmount, nextReceivedAmount);
+
     const savedEvent = await this.eventsRepository.save(event);
     await this.replaceEventTransactions(
       userId,
       savedEvent,
       person.id,
-      payload.paidAmount !== undefined
-        ? this.normalizeAmount(payload.paidAmount)
-        : currentPaidAmount,
-      payload.receivedAmount !== undefined
-        ? this.normalizeAmount(payload.receivedAmount)
-        : currentReceivedAmount,
+      nextPaidAmount,
+      nextReceivedAmount,
     );
 
     return this.getById(userId, savedEvent.id);
@@ -208,6 +215,14 @@ export class EventsService {
     return amount;
   }
 
+  private validateEventAmounts(paidAmount: number, receivedAmount: number) {
+    if (paidAmount > 0 && receivedAmount > 0) {
+      throw new BadRequestException(
+        'Event and transaction are 1:1, so only one of paidAmount or receivedAmount can be greater than 0',
+      );
+    }
+  }
+
   private async replaceEventTransactions(
     userId: string,
     event: EventEntity,
@@ -224,29 +239,16 @@ export class EventsService {
     }
 
     const nextTransactions: TransactionEntity[] = [];
+    const amount = paidAmount > 0 ? paidAmount : receivedAmount > 0 ? -receivedAmount : 0;
 
-    if (paidAmount > 0) {
+    if (amount !== 0) {
       nextTransactions.push(
         this.transactionsRepository.create({
           id: randomUUID(),
           userId,
           personId,
           eventId: event.id,
-          amount: paidAmount,
-          date: event.date,
-          memo: null,
-        }),
-      );
-    }
-
-    if (receivedAmount > 0) {
-      nextTransactions.push(
-        this.transactionsRepository.create({
-          id: randomUUID(),
-          userId,
-          personId,
-          eventId: event.id,
-          amount: -receivedAmount,
+          amount,
           date: event.date,
           memo: null,
         }),

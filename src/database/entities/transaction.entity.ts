@@ -3,7 +3,9 @@ import {
   CreateDateColumn,
   Entity,
   Index,
+  JoinColumn,
   ManyToOne,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -36,10 +38,11 @@ export class TransactionEntity {
   @Column({ name: 'event_id', type: 'uuid', nullable: true })
   eventId?: string | null;
 
-  @ManyToOne(() => EventEntity, (event) => event.transactions, {
+  @OneToOne(() => EventEntity, (event) => event.transaction, {
     onDelete: 'SET NULL',
     nullable: true,
   })
+  @JoinColumn({ name: 'event_id' })
   event?: EventEntity | null;
 
   @Column({ type: 'int' })

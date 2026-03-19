@@ -2,7 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { randomUUID } from 'crypto';
 import { InjectRepository } from '@nestjs/typeorm';
 import { MoreThanOrEqual, Repository } from 'typeorm';
-import { PersonEntity, TransactionEntity } from '../database/entities';
+import { EventEntity, PersonEntity, TransactionEntity } from '../database/entities';
 import { CreatePersonDto } from './dto/create-person.dto';
 import { UpdatePersonDto } from './dto/update-person.dto';
 
@@ -13,6 +13,8 @@ export class PeopleService {
     private readonly peopleRepository: Repository<PersonEntity>,
     @InjectRepository(TransactionEntity)
     private readonly transactionsRepository: Repository<TransactionEntity>,
+    @InjectRepository(EventEntity)
+    private readonly eventsRepository: Repository<EventEntity>,
   ) {}
 
   async list(userId: string) {
@@ -115,6 +117,7 @@ export class PeopleService {
       receivedAmount,
       transactions: transactions.map((tx) => ({
         id: tx.id,
+        eventId: tx.eventId ?? null,
         title: tx.event?.eventName || tx.memo || '거래 내역',
         date: tx.date.toISOString().split('T')[0],
         amount: tx.amount,
@@ -169,6 +172,16 @@ export class PeopleService {
       throw new NotFoundException('Person not found');
     }
 
+    const transactions = await this.transactionsRepository.find({
+      where: { userId, personId: person.id },
+    });
+    const eventIds = transactions
+      .map((transaction) => transaction.eventId)
+      .filter((eventId): eventId is string => Boolean(eventId));
+
+    if (eventIds.length > 0) {
+      await this.eventsRepository.delete(eventIds);
+    }
     await this.peopleRepository.remove(person);
   }
 }

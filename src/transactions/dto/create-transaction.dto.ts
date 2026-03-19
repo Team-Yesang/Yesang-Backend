@@ -4,14 +4,11 @@ export class CreateTransactionDto {
   @ApiProperty({ format: 'uuid' })
   personId: string;
 
-  @ApiPropertyOptional({ example: '결혼식' })
-  title?: string;
+  @ApiProperty({ format: 'uuid' })
+  eventId: string;
 
   @ApiProperty({ example: 50000 })
   amount: number;
-
-  @ApiProperty({ example: '2026-02-26' })
-  date: string;
 
   @ApiPropertyOptional({ example: '축의금' })
   memo?: string;

@@ -4,7 +4,7 @@ import {
   Entity,
   Index,
   ManyToOne,
-  OneToMany,
+  OneToOne,
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -41,6 +41,6 @@ export class EventEntity {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
-  @OneToMany(() => TransactionEntity, (transaction) => transaction.event)
-  transactions: TransactionEntity[];
+  @OneToOne(() => TransactionEntity, (transaction) => transaction.event)
+  transaction?: TransactionEntity | null;
 }
