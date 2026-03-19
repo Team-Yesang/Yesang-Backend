@@ -38,6 +38,25 @@ export class EventsService {
     return this.buildEventResponses(userId, events);
   }
 
+  async listUpcoming(userId: string) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const endDate = new Date(today);
+    endDate.setDate(endDate.getDate() + 14);
+    endDate.setHours(23, 59, 59, 999);
+
+    const events = await this.eventsRepository.find({
+      where: {
+        userId,
+        date: Between(today, endDate),
+      },
+      order: { date: 'ASC' },
+    });
+
+    return this.buildEventResponses(userId, events);
+  }
+
   async getById(userId: string, id: string) {
     const event = await this.eventsRepository.findOne({
       where: { id, userId },

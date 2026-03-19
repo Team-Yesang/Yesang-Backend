@@ -50,6 +50,13 @@ export class EventsController {
     return this.eventsService.listByMonth(user.id, safeYear, safeMonth);
   }
 
+  @Get('upcoming')
+  @ApiOperation({ summary: '다가오는 이벤트 목록 조회' })
+  @ApiOkResponse({ type: [EventDto] })
+  async listUpcoming(@CurrentUser() user: RequestUser) {
+    return this.eventsService.listUpcoming(user.id);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: '이벤트 단건 조회' })
   @ApiParam({ name: 'id', format: 'uuid' })
