@@ -5,6 +5,8 @@ services:
       - "127.0.0.1:55556:55556"
     environment:
       PORT: "55556"
+      JWT_SECRET: "${JWT_SECRET}"
+      FRONTEND_URL: "${FRONTEND_URL}"
       DB_HOST: "yesang-db"
       DB_PORT: "3306"
       DB_USER: "${DB_USER}"
@@ -12,6 +14,17 @@ services:
       DB_NAME: "${DB_NAME}"
       DB_LOGGING: "${DB_LOGGING:-false}"
       DB_SYNCHRONIZE: "${DB_SYNCHRONIZE:-false}"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET:-}"
+      GOOGLE_CALLBACK_URL: "${GOOGLE_CALLBACK_URL:-}"
+      KAKAO_CLIENT_ID: "${KAKAO_CLIENT_ID:-}"
+      KAKAO_CALLBACK_URL: "${KAKAO_CALLBACK_URL:-}"
+      APPLE_CLIENT_ID: "${APPLE_CLIENT_ID:-}"
+      APPLE_BUNDLE_ID: "${APPLE_BUNDLE_ID:-}"
+      APPLE_TEAM_ID: "${APPLE_TEAM_ID:-}"
+      APPLE_KEY_ID: "${APPLE_KEY_ID:-}"
+      APPLE_PRIVATE_KEY_PATH: "${APPLE_PRIVATE_KEY_PATH:-}"
+      APPLE_CALLBACK_URL: "${APPLE_CALLBACK_URL:-}"
     depends_on:
       - yesang-db
     restart: unless-stopped

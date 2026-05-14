@@ -8,6 +8,21 @@ import { AppleTokenService } from '../services/apple-token.service';
 @Injectable()
 export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
   constructor(private readonly appleTokenService: AppleTokenService) {
+    const requiredEnvKeys = [
+      'APPLE_CLIENT_ID',
+      'APPLE_TEAM_ID',
+      'APPLE_KEY_ID',
+      'APPLE_PRIVATE_KEY_PATH',
+      'APPLE_CALLBACK_URL',
+    ] as const;
+    const missingEnvKeys = requiredEnvKeys.filter((key) => !process.env[key]);
+
+    if (missingEnvKeys.length > 0) {
+      throw new Error(
+        `Apple login environment variables are missing: ${missingEnvKeys.join(', ')}`,
+      );
+    }
+
     super({
       clientID: process.env.APPLE_CLIENT_ID!,
       teamID: process.env.APPLE_TEAM_ID!,
