@@ -9,7 +9,7 @@ import {
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthGuard } from '../common/guards/auth.guard';
 import type { RequestUser } from '../common/interfaces/request-with-user';
-import { UpdateUserDto, UserDto } from './dto/update-user.dto';
+import { DeleteMyAccountResponseDto, UpdateUserDto, UserDto } from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -36,9 +36,8 @@ export class UsersController {
 
   @Delete('me')
   @ApiOperation({ summary: '내 계정 삭제' })
-  @ApiOkResponse({ schema: { example: { deleted: true } } })
+  @ApiOkResponse({ type: DeleteMyAccountResponseDto })
   async removeMe(@CurrentUser() user: RequestUser) {
-    await this.usersService.remove(user.id);
-    return { deleted: true };
+    return this.usersService.remove(user.id);
   }
 }

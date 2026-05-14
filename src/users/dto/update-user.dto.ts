@@ -24,3 +24,20 @@ export class UserDto {
   @ApiProperty({ example: 'KAKAO' })
   provider: string;
 }
+
+export class DeleteMyAccountResponseDto {
+  @ApiProperty({ example: true })
+  deleted: boolean;
+
+  @ApiProperty({ example: true })
+  tokensInvalidated: boolean;
+
+  @ApiProperty({ example: 3, description: '삭제된 사람 기록 수' })
+  deletedPeopleCount: number;
+
+  @ApiProperty({ example: 5, description: '삭제된 이벤트 기록 수' })
+  deletedEventsCount: number;
+
+  @ApiProperty({ example: 12, description: '삭제된 거래 기록 수' })
+  deletedTransactionsCount: number;
+}
