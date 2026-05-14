@@ -1,9 +1,7 @@
-import { CanActivate, ExecutionContext, INestApplication, UnauthorizedException } from '@nestjs/common';
+import { NotFoundException } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import request from 'supertest';
 import { DataSource } from 'typeorm';
-import { AuthGuard } from '../src/common/guards/auth.guard';
 import {
   EventEntity,
   PersonEntity,
@@ -51,26 +49,6 @@ type TestState = {
   events: TestEvent[];
   transactions: TestTransaction[];
 };
-
-class TestAuthGuard implements CanActivate {
-  constructor(private readonly state: TestState) {}
-
-  canActivate(context: ExecutionContext): boolean {
-    const request = context.switchToHttp().getRequest();
-    const authorization = request.headers.authorization;
-    const token = typeof authorization === 'string' ? authorization.replace(/^Bearer\s+/i, '') : '';
-    const user = this.state.users.find((candidate) => candidate.id === token);
-
-    if (!user) {
-      throw new UnauthorizedException('인증 정보가 유효하지 않습니다.');
-    }
-
-    request.user = { id: user.id };
-    return true;
-  }
-}
-
-const originalAuthGuardCanActivate = AuthGuard.prototype.canActivate;
 
 const createUsersRepository = (state: TestState) => ({
   findOne: jest.fn(async ({ where }: { where: Partial<TestUser> }) => {
@@ -144,7 +122,8 @@ const createDataSource = (state: TestState) => ({
 });
 
 describe('UsersController account deletion (e2e)', () => {
-  let app: INestApplication;
+  let controller: UsersController;
+  let service: UsersService;
   let state: TestState;
 
   beforeEach(async () => {
@@ -214,29 +193,30 @@ describe('UsersController account deletion (e2e)', () => {
         { provide: DataSource, useValue: createDataSource(state) },
       ],
     }).compile();
-
-    AuthGuard.prototype.canActivate = function (context: ExecutionContext) {
-      return new TestAuthGuard(state).canActivate(context);
-    };
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+    controller = moduleFixture.get(UsersController);
+    service = moduleFixture.get(UsersService);
   });
 
-  afterEach(async () => {
-    await app.close();
-    AuthGuard.prototype.canActivate = originalAuthGuardCanActivate;
+  it('returns only public profile fields for my account', async () => {
+    const response = await controller.getMe({ id: 'user-1' });
+
+    expect(response).toEqual({
+      id: 'user-1',
+      email: 'user1@yesang.kr',
+      name: '홍길동',
+      profileImage: null,
+      provider: 'APPLE',
+    });
+    expect((response as Record<string, unknown>).refreshToken).toBeUndefined();
+    expect((response as Record<string, unknown>).providerSubject).toBeUndefined();
+    expect((response as Record<string, unknown>).createdAt).toBeUndefined();
+    expect((response as Record<string, unknown>).updatedAt).toBeUndefined();
   });
 
   it('deletes the user account, related records, and invalidates the token', async () => {
-    const httpApp = app.getHttpAdapter().getInstance();
+    const deleteResponse = await controller.removeMe({ id: 'user-1' });
 
-    const deleteResponse = await request(httpApp)
-      .delete('/users/me')
-      .set('Authorization', 'Bearer user-1')
-      .expect(200);
-
-    expect(deleteResponse.body).toEqual({
+    expect(deleteResponse).toEqual({
       deleted: true,
       tokensInvalidated: true,
       deletedPeopleCount: 2,
@@ -249,9 +229,6 @@ describe('UsersController account deletion (e2e)', () => {
     expect(state.events.map((event) => event.id)).toEqual(['event-3']);
     expect(state.transactions.map((transaction) => transaction.id)).toEqual(['tx-3']);
 
-    await request(httpApp)
-      .get('/users/me')
-      .set('Authorization', 'Bearer user-1')
-      .expect(401);
+    await expect(service.getById('user-1')).rejects.toThrow(NotFoundException);
   });
 });

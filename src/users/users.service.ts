@@ -2,7 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { EventEntity, PersonEntity, TransactionEntity, UserEntity } from '../database/entities';
-import { UpdateUserDto } from './dto/update-user.dto';
+import { UpdateUserDto, UserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -12,16 +12,13 @@ export class UsersService {
     private readonly dataSource: DataSource,
   ) {}
 
-  async getById(userId: string): Promise<UserEntity> {
-    const user = await this.usersRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException('사용자를 찾을 수 없습니다.');
-    }
-    return user;
+  async getById(userId: string): Promise<UserDto> {
+    const user = await this.findEntityById(userId);
+    return this.toUserDto(user);
   }
 
-  async update(userId: string, payload: UpdateUserDto): Promise<UserEntity> {
-    const user = await this.getById(userId);
+  async update(userId: string, payload: UpdateUserDto): Promise<UserDto> {
+    const user = await this.findEntityById(userId);
 
     if (payload.name !== undefined) {
       user.name = payload.name;
@@ -31,7 +28,26 @@ export class UsersService {
       user.profileImage = payload.profileImage ?? null;
     }
 
-    return this.usersRepository.save(user);
+    const savedUser = await this.usersRepository.save(user);
+    return this.toUserDto(savedUser);
+  }
+
+  private async findEntityById(userId: string): Promise<UserEntity> {
+    const user = await this.usersRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException('사용자를 찾을 수 없습니다.');
+    }
+    return user;
+  }
+
+  private toUserDto(user: UserEntity): UserDto {
+    return {
+      id: user.id,
+      email: user.email,
+      name: user.name,
+      profileImage: user.profileImage ?? null,
+      provider: user.provider,
+    };
   }
 
   async remove(userId: string) {
