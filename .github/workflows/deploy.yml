@@ -10,7 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Deploy to server
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Upload project to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SERVER_SSH_KEY }}
+          port: 10222
+          source: "."
+          target: "~/Yesang-Backend"
+          rm: true
+          overwrite: true
+          strip_components: 0
+          tar_dereference: true
+          exclude: ".git,.github,node_modules,dist,.env,coverage,.DS_Store"
+
+      - name: Deploy on server
         uses: appleboy/ssh-action@v1.0.3
         with:
           host: ${{ secrets.SERVER_HOST }}
@@ -19,6 +37,5 @@ jobs:
           port: 10222
           script: |
             cd ~/Yesang-Backend
-            git pull origin main
             docker compose up -d --build
             docker ps
