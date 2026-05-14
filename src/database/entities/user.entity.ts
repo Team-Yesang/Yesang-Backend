@@ -26,6 +26,9 @@ export class UserEntity {
   @Column({ length: 255 })
   email: string;
 
+  @Column({ name: 'provider_subject', type: 'varchar', length: 255, nullable: true })
+  providerSubject?: string | null;
+
   @Column({ length: 80 })
   name: string;
 

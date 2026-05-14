@@ -1,5 +1,5 @@
 import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
-import { ApiBearerAuth, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiBody, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
 import { GoogleAuthGuard } from './guards/google-auth.guard';
@@ -7,6 +7,7 @@ import { KakaoAuthGuard } from './guards/kakao-auth.guard';
 import { AppleAuthGuard } from './guards/apple-auth.guard';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { AuthResponseDto, LogoutResponseDto } from './dto/auth-response.dto';
+import { AppleNativeLoginDto } from './dto/login.dto';
 
 @Controller('auth')
 @ApiTags('auth')
@@ -50,6 +51,25 @@ export class AuthController {
   @Get('apple/callback')
   @UseGuards(AppleAuthGuard)
   async appleLoginCallback(@Req() req: any, @Res() res: any) {
+    return this.handleAppleLoginCallback(req, res);
+  }
+
+  @ApiExcludeEndpoint()
+  @Post('apple/callback')
+  @UseGuards(AppleAuthGuard)
+  async appleLoginCallbackPost(@Req() req: any, @Res() res: any) {
+    return this.handleAppleLoginCallback(req, res);
+  }
+
+  @Post('apple/native')
+  @ApiOperation({ summary: '애플 identityToken 로그인' })
+  @ApiResponse({ status: 201, type: AuthResponseDto })
+  @ApiBody({ type: AppleNativeLoginDto })
+  async appleNativeLogin(@Body() body: AppleNativeLoginDto) {
+    return this.authService.appleNativeLogin(body);
+  }
+
+  private async handleAppleLoginCallback(req: any, res: any) {
     const { accessToken, refreshToken } = await this.authService.oauthLogin(req.user);
     const redirectUrl = this.getRedirectUrl(req);
     return this.sendAppRedirect(res, redirectUrl, accessToken, refreshToken);

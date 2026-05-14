@@ -4,6 +4,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { randomUUID } from 'crypto';
 import { Repository } from 'typeorm';
 import { AuthProvider, UserEntity } from '../database/entities';
+import { AppleNativeLoginDto } from './dto/login.dto';
+import { AppleTokenService } from './services/apple-token.service';
 
 @Injectable()
 export class AuthService {
@@ -11,31 +13,46 @@ export class AuthService {
     @InjectRepository(UserEntity)
     private readonly usersRepository: Repository<UserEntity>,
     private readonly jwtService: JwtService,
+    private readonly appleTokenService: AppleTokenService,
   ) {}
 
   async oauthLogin(payload: {
-    email: string;
-    name: string;
+    email?: string;
+    name?: string;
     profileImage?: string;
     provider: AuthProvider;
+    providerSubject?: string;
   }): Promise<{ accessToken: string; refreshToken: string; user: UserEntity }> {
-    const { email, name, profileImage, provider } = payload;
+    const { email, name, profileImage, provider, providerSubject } = payload;
 
-    if (!email) {
+    let user: UserEntity | null = null;
+
+    if (providerSubject) {
+      user = await this.usersRepository.findOne({
+        where: { provider, providerSubject },
+      });
+    }
+
+    if (!user && email) {
+      user = await this.usersRepository.findOne({
+        where: { email, provider },
+      });
+    }
+
+    if (!user && !email) {
       throw new BadRequestException('소셜 로그인 제공자로부터 이메일을 받을 수 없습니다.');
     }
 
-    let user = await this.usersRepository.findOne({
-      where: { email, provider },
-    });
-
     if (user) {
+      if (email) user.email = email;
+      if (providerSubject) user.providerSubject = providerSubject;
       user.name = name || user.name;
       if (profileImage) user.profileImage = profileImage;
     } else {
       user = this.usersRepository.create({
         id: randomUUID(),
-        email,
+        email: email!,
+        providerSubject,
         name: name || 'User',
         profileImage,
         provider,
@@ -54,6 +71,20 @@ export class AuthService {
       refreshToken,
       user,
     };
+  }
+
+  async appleNativeLogin(payload: AppleNativeLoginDto) {
+    const claims = await this.appleTokenService.verifyIdentityToken(payload.identityToken, [
+      process.env.APPLE_BUNDLE_ID,
+      process.env.APPLE_CLIENT_ID,
+    ]);
+
+    return this.oauthLogin({
+      email: claims.email,
+      name: payload.name || 'Apple User',
+      provider: AuthProvider.APPLE,
+      providerSubject: claims.sub,
+    });
   }
 
   async refresh(refreshToken: string): Promise<{ accessToken: string; refreshToken: string }> {

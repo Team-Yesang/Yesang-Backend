@@ -42,3 +42,11 @@ export class LoginResponseDto {
   @ApiProperty({ type: LoginUserDto })
   user: LoginUserDto;
 }
+
+export class AppleNativeLoginDto {
+  @ApiProperty({ example: 'eyJraWQiOiJ...<apple-identity-token>' })
+  identityToken: string;
+
+  @ApiPropertyOptional({ example: '홍길동' })
+  name?: string;
+}
