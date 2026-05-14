@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { All, Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiBody, ApiExcludeEndpoint, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -48,16 +48,9 @@ export class AuthController {
   async appleLogin() {}
 
   @ApiExcludeEndpoint()
-  @Get('apple/callback')
+  @All('apple/callback')
   @UseGuards(AppleAuthGuard)
   async appleLoginCallback(@Req() req: any, @Res() res: any) {
-    return this.handleAppleLoginCallback(req, res);
-  }
-
-  @ApiExcludeEndpoint()
-  @Post('apple/callback')
-  @UseGuards(AppleAuthGuard)
-  async appleLoginCallbackPost(@Req() req: any, @Res() res: any) {
     return this.handleAppleLoginCallback(req, res);
   }
 
@@ -92,7 +85,7 @@ export class AuthController {
   }
 
   private getRedirectUrl(req: any): string {
-    const state = req.query.state;
+    const state = req.body?.state || req.query?.state;
     if (state) {
       try {
         const parsedState = JSON.parse(state);
