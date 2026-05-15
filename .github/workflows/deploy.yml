@@ -22,7 +22,8 @@ jobs:
           port: 10222
           source: "."
           target: "~/Yesang-Backend"
-          rm: true
+          # Preserve server-only files such as .env and Apple private keys.
+          rm: false
           overwrite: true
           strip_components: 0
           tar_dereference: true
