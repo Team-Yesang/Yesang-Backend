@@ -26,7 +26,7 @@ services:
       APPLE_PRIVATE_KEY_PATH: '${APPLE_PRIVATE_KEY_PATH:-}'
       APPLE_CALLBACK_URL: '${APPLE_CALLBACK_URL:-}'
     volumes:
-      - ./AuthKey_FY76TKJW2W.p8:/app/AuthKey_48CZBZF894.p8:ro
+      - ./AuthKey_48CZBZF894.p8:/app/AuthKey_48CZBZF894.p8:ro
     depends_on:
       - yesang-db
     restart: unless-stopped
