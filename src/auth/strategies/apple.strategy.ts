@@ -6,7 +6,7 @@ import { AuthProvider } from '../../database/entities/user.entity';
 import { AppleTokenService } from '../services/apple-token.service';
 
 @Injectable()
-export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
+export class AppleStrategy extends PassportStrategy(Strategy, 'apple', 6) {
   constructor(private readonly appleTokenService: AppleTokenService) {
     const requiredEnvKeys = [
       'APPLE_CLIENT_ID',
@@ -34,7 +34,17 @@ export class AppleStrategy extends PassportStrategy(Strategy, 'apple') {
     });
   }
 
-  async validate(req: Request, accessToken: string, refreshToken: string, idToken: string): Promise<any> {
+  async validate(
+    req: Request,
+    accessToken: string,
+    refreshToken: string,
+    idToken: string,
+    profile: unknown,
+  ): Promise<any> {
+    if (typeof idToken !== 'string') {
+      throw new Error('Apple login did not return a valid identity token.');
+    }
+
     const claims = await this.appleTokenService.verifyIdentityToken(idToken, process.env.APPLE_CLIENT_ID);
     const appleProfile = (req as Request & { appleProfile?: { name?: { firstName?: string; lastName?: string } } })
       .appleProfile;
