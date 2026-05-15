@@ -6,9 +6,8 @@ type AppleJwk = {
   kid: string;
   use: string;
   alg: string;
-  crv: string;
-  x: string;
-  y: string;
+  n: string;
+  e: string;
 };
 
 type AppleIdentityTokenClaims = {
@@ -40,15 +39,15 @@ export class AppleTokenService {
     const header = this.parseSegment<{ alg: string; kid: string }>(encodedHeader);
     const claims = this.parseSegment<AppleIdentityTokenClaims>(encodedPayload);
 
-    if (header.alg !== 'ES256' || !header.kid) {
+    if (header.alg !== 'RS256' || !header.kid) {
       throw new UnauthorizedException('지원하지 않는 Apple identityToken 입니다.');
     }
 
     const jwk = await this.getSigningKey(header.kid);
     const publicKey = createPublicKey({ key: jwk, format: 'jwk' });
     const signingInput = Buffer.from(`${encodedHeader}.${encodedPayload}`);
-    const signature = this.joseToDer(Buffer.from(encodedSignature, 'base64url'));
-    const isValid = verify('sha256', signingInput, publicKey, signature);
+    const signature = Buffer.from(encodedSignature, 'base64url');
+    const isValid = verify('RSA-SHA256', signingInput, publicKey, signature);
 
     if (!isValid) {
       throw new UnauthorizedException('Apple identityToken 서명 검증에 실패했습니다.');
@@ -119,46 +118,5 @@ export class AppleTokenService {
     } catch {
       throw new UnauthorizedException('유효하지 않은 Apple identityToken 형식입니다.');
     }
-  }
-
-  private joseToDer(signature: Buffer) {
-    if (signature.length !== 64) {
-      throw new UnauthorizedException('유효하지 않은 Apple identityToken 서명입니다.');
-    }
-
-    const r = this.encodeDerInteger(signature.subarray(0, 32));
-    const s = this.encodeDerInteger(signature.subarray(32));
-    const sequenceLength = r.length + s.length;
-
-    return Buffer.concat([Buffer.from([0x30]), this.encodeDerLength(sequenceLength), r, s]);
-  }
-
-  private encodeDerInteger(value: Buffer) {
-    let bytes = value;
-
-    while (bytes.length > 1 && bytes[0] === 0) {
-      bytes = bytes.subarray(1);
-    }
-
-    if (bytes[0] & 0x80) {
-      bytes = Buffer.concat([Buffer.from([0]), bytes]);
-    }
-
-    return Buffer.concat([Buffer.from([0x02]), this.encodeDerLength(bytes.length), bytes]);
-  }
-
-  private encodeDerLength(length: number) {
-    if (length < 0x80) {
-      return Buffer.from([length]);
-    }
-
-    const bytes: number[] = [];
-    let remaining = length;
-    while (remaining > 0) {
-      bytes.unshift(remaining & 0xff);
-      remaining >>= 8;
-    }
-
-    return Buffer.from([0x80 | bytes.length, ...bytes]);
   }
 }
