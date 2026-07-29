@@ -23,6 +23,9 @@ export class UserDto {
 
   @ApiProperty({ example: 'KAKAO' })
   provider: string;
+
+  @ApiProperty({ example: true, description: '온보딩 화면 표시 필요 여부' })
+  needsOnboarding: boolean;
 }
 
 export class DeleteMyAccountResponseDto {

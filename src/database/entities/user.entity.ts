@@ -26,20 +26,38 @@ export class UserEntity {
   @Column({ length: 255 })
   email: string;
 
-  @Column({ name: 'provider_subject', type: 'varchar', length: 255, nullable: true })
+  @Column({
+    name: 'provider_subject',
+    type: 'varchar',
+    length: 255,
+    nullable: true,
+  })
   providerSubject?: string | null;
 
   @Column({ length: 80 })
   name: string;
 
-  @Column({ name: 'profile_image', type: 'varchar', length: 500, nullable: true })
+  @Column({
+    name: 'profile_image',
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+  })
   profileImage?: string | null;
 
   @Column({ type: 'enum', enum: AuthProvider })
   provider: AuthProvider;
 
-  @Column({ name: 'refresh_token', type: 'varchar', length: 500, nullable: true })
+  @Column({
+    name: 'refresh_token',
+    type: 'varchar',
+    length: 500,
+    nullable: true,
+  })
   refreshToken?: string | null;
+
+  @Column({ name: 'onboarding_completed_at', type: 'datetime', nullable: true })
+  onboardingCompletedAt?: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

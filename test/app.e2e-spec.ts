@@ -19,6 +19,7 @@ type TestUser = {
   profileImage?: string | null;
   provider: 'APPLE' | 'GOOGLE' | 'KAKAO';
   refreshToken?: string | null;
+  onboardingCompletedAt?: Date | null;
 };
 
 type TestPerson = {
@@ -59,7 +60,8 @@ const createUsersRepository = (state: TestState) => ({
     if (where.email && where.provider) {
       return (
         state.users.find(
-          (user) => user.email === where.email && user.provider === where.provider,
+          (user) =>
+            user.email === where.email && user.provider === where.provider,
         ) ?? null
       );
     }
@@ -67,7 +69,9 @@ const createUsersRepository = (state: TestState) => ({
     return null;
   }),
   save: jest.fn(async (user: TestUser) => {
-    const index = state.users.findIndex((candidate) => candidate.id === user.id);
+    const index = state.users.findIndex(
+      (candidate) => candidate.id === user.id,
+    );
     if (index >= 0) {
       state.users[index] = { ...state.users[index], ...user };
       return state.users[index];
@@ -81,7 +85,11 @@ const createUsersRepository = (state: TestState) => ({
 const createDataSource = (state: TestState) => ({
   transaction: async <T>(callback: (manager: any) => Promise<T>) => {
     const manager = {
-      update: async (_entity: unknown, where: Partial<TestUser>, payload: Partial<TestUser>) => {
+      update: async (
+        _entity: unknown,
+        where: Partial<TestUser>,
+        payload: Partial<TestUser>,
+      ) => {
         const user = state.users.find((candidate) => candidate.id === where.id);
         if (user) {
           Object.assign(user, payload);
@@ -91,19 +99,25 @@ const createDataSource = (state: TestState) => ({
       delete: async (entity: unknown, where: Record<string, string>) => {
         if (entity === TransactionEntity) {
           const before = state.transactions.length;
-          state.transactions = state.transactions.filter((transaction) => transaction.userId !== where.userId);
+          state.transactions = state.transactions.filter(
+            (transaction) => transaction.userId !== where.userId,
+          );
           return { affected: before - state.transactions.length };
         }
 
         if (entity === EventEntity) {
           const before = state.events.length;
-          state.events = state.events.filter((event) => event.userId !== where.userId);
+          state.events = state.events.filter(
+            (event) => event.userId !== where.userId,
+          );
           return { affected: before - state.events.length };
         }
 
         if (entity === PersonEntity) {
           const before = state.people.length;
-          state.people = state.people.filter((person) => person.userId !== where.userId);
+          state.people = state.people.filter(
+            (person) => person.userId !== where.userId,
+          );
           return { affected: before - state.people.length };
         }
 
@@ -134,6 +148,7 @@ describe('UsersController account deletion (e2e)', () => {
           email: 'user1@yesang.kr',
           name: '홍길동',
           provider: 'APPLE',
+          onboardingCompletedAt: null,
           refreshToken: 'refresh-token-1',
         },
         {
@@ -141,6 +156,7 @@ describe('UsersController account deletion (e2e)', () => {
           email: 'user2@yesang.kr',
           name: '김철수',
           provider: 'KAKAO',
+          onboardingCompletedAt: new Date('2026-05-01T00:00:00Z'),
           refreshToken: 'refresh-token-2',
         },
       ],
@@ -150,9 +166,24 @@ describe('UsersController account deletion (e2e)', () => {
         { id: 'person-3', userId: 'user-2', name: '사아자' },
       ],
       events: [
-        { id: 'event-1', userId: 'user-1', eventName: '결혼식', date: new Date('2026-05-14T12:00:00Z') },
-        { id: 'event-2', userId: 'user-1', eventName: '장례식', date: new Date('2026-05-15T12:00:00Z') },
-        { id: 'event-3', userId: 'user-2', eventName: '돌잔치', date: new Date('2026-05-16T12:00:00Z') },
+        {
+          id: 'event-1',
+          userId: 'user-1',
+          eventName: '결혼식',
+          date: new Date('2026-05-14T12:00:00Z'),
+        },
+        {
+          id: 'event-2',
+          userId: 'user-1',
+          eventName: '장례식',
+          date: new Date('2026-05-15T12:00:00Z'),
+        },
+        {
+          id: 'event-3',
+          userId: 'user-2',
+          eventName: '돌잔치',
+          date: new Date('2026-05-16T12:00:00Z'),
+        },
       ],
       transactions: [
         {
@@ -186,7 +217,10 @@ describe('UsersController account deletion (e2e)', () => {
       controllers: [UsersController],
       providers: [
         UsersService,
-        { provide: getRepositoryToken(UserEntity), useValue: createUsersRepository(state) },
+        {
+          provide: getRepositoryToken(UserEntity),
+          useValue: createUsersRepository(state),
+        },
         { provide: getRepositoryToken(PersonEntity), useValue: {} },
         { provide: getRepositoryToken(EventEntity), useValue: {} },
         { provide: getRepositoryToken(TransactionEntity), useValue: {} },
@@ -206,9 +240,12 @@ describe('UsersController account deletion (e2e)', () => {
       name: '홍길동',
       profileImage: null,
       provider: 'APPLE',
+      needsOnboarding: true,
     });
     expect((response as Record<string, unknown>).refreshToken).toBeUndefined();
-    expect((response as Record<string, unknown>).providerSubject).toBeUndefined();
+    expect(
+      (response as Record<string, unknown>).providerSubject,
+    ).toBeUndefined();
     expect((response as Record<string, unknown>).createdAt).toBeUndefined();
     expect((response as Record<string, unknown>).updatedAt).toBeUndefined();
   });
@@ -227,8 +264,17 @@ describe('UsersController account deletion (e2e)', () => {
     expect(state.users.map((user) => user.id)).toEqual(['user-2']);
     expect(state.people.map((person) => person.id)).toEqual(['person-3']);
     expect(state.events.map((event) => event.id)).toEqual(['event-3']);
-    expect(state.transactions.map((transaction) => transaction.id)).toEqual(['tx-3']);
+    expect(state.transactions.map((transaction) => transaction.id)).toEqual([
+      'tx-3',
+    ]);
 
     await expect(service.getById('user-1')).rejects.toThrow(NotFoundException);
+  });
+
+  it('marks onboarding as completed for my account', async () => {
+    const response = await controller.completeOnboarding({ id: 'user-1' });
+
+    expect(response.needsOnboarding).toBe(false);
+    expect(state.users[0].onboardingCompletedAt).toBeInstanceOf(Date);
   });
 });

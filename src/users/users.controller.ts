@@ -1,4 +1,11 @@
-import { Body, Controller, Delete, Get, Patch, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Patch,
+  UseGuards,
+} from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -9,7 +16,11 @@ import {
 import { CurrentUser } from '../common/decorators/current-user.decorator';
 import { AuthGuard } from '../common/guards/auth.guard';
 import type { RequestUser } from '../common/interfaces/request-with-user';
-import { DeleteMyAccountResponseDto, UpdateUserDto, UserDto } from './dto/update-user.dto';
+import {
+  DeleteMyAccountResponseDto,
+  UpdateUserDto,
+  UserDto,
+} from './dto/update-user.dto';
 import { UsersService } from './users.service';
 
 @Controller('users')
@@ -30,8 +41,18 @@ export class UsersController {
   @ApiOperation({ summary: '내 프로필 수정' })
   @ApiBody({ type: UpdateUserDto })
   @ApiOkResponse({ type: UserDto })
-  async updateMe(@CurrentUser() user: RequestUser, @Body() body: UpdateUserDto) {
+  async updateMe(
+    @CurrentUser() user: RequestUser,
+    @Body() body: UpdateUserDto,
+  ) {
     return this.usersService.update(user.id, body);
+  }
+
+  @Patch('me/onboarding')
+  @ApiOperation({ summary: '내 온보딩 완료 처리' })
+  @ApiOkResponse({ type: UserDto })
+  async completeOnboarding(@CurrentUser() user: RequestUser) {
+    return this.usersService.completeOnboarding(user.id);
   }
 
   @Delete('me')

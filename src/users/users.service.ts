@@ -1,7 +1,12 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
-import { EventEntity, PersonEntity, TransactionEntity, UserEntity } from '../database/entities';
+import {
+  EventEntity,
+  PersonEntity,
+  TransactionEntity,
+  UserEntity,
+} from '../database/entities';
 import { UpdateUserDto, UserDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -32,6 +37,14 @@ export class UsersService {
     return this.toUserDto(savedUser);
   }
 
+  async completeOnboarding(userId: string): Promise<UserDto> {
+    const user = await this.findEntityById(userId);
+    user.onboardingCompletedAt = new Date();
+
+    const savedUser = await this.usersRepository.save(user);
+    return this.toUserDto(savedUser);
+  }
+
   private async findEntityById(userId: string): Promise<UserEntity> {
     const user = await this.usersRepository.findOne({ where: { id: userId } });
     if (!user) {
@@ -47,6 +60,7 @@ export class UsersService {
       name: user.name,
       profileImage: user.profileImage ?? null,
       provider: user.provider,
+      needsOnboarding: !user.onboardingCompletedAt,
     };
   }
 
@@ -59,7 +73,9 @@ export class UsersService {
     return this.dataSource.transaction(async (manager) => {
       await manager.update(UserEntity, { id: userId }, { refreshToken: null });
 
-      const deletedTransactions = await manager.delete(TransactionEntity, { userId });
+      const deletedTransactions = await manager.delete(TransactionEntity, {
+        userId,
+      });
       const deletedEvents = await manager.delete(EventEntity, { userId });
       const deletedPeople = await manager.delete(PersonEntity, { userId });
       await manager.delete(UserEntity, { id: userId });
